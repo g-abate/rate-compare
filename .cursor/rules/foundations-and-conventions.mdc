@@ -1,0 +1,148 @@
+---
+description: "Core WordPress plugin development principles and conventions"
+globs: ["**/*.php", "**/*.js", "**/*.css", "**/*.scss", "**/*.md"]
+alwaysApply: true
+---
+
+# WordPress Plugin Foundations & Conventions
+
+## Core Principles
+
+- **WordPress First**: Use WordPress APIs, hooks, and patterns before custom solutions
+- **Security by Default**: Nonces, capability checks, sanitization, escaping
+- **Modular OOP**: Prefer classes for complex functionality, hooks for extensibility
+- **No Core Modification**: Never modify WordPress core files or database structure
+- **Performance Conscious**: Efficient queries, proper caching, minimal resource usage
+
+## Coding Standards
+
+Follow [WordPress PHP Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/php/):
+
+```php
+// Good: Descriptive names, proper spacing
+function plugin_slug_get_user_preferences( int $user_id ): array {
+    return get_user_meta( $user_id, 'plugin_slug_preferences', true ) ?: [];
+}
+
+// Bad: Unclear names, poor formatting
+function getPrefs($uid){return get_user_meta($uid,'prefs',true);}
+```
+
+## Directory Structure
+
+Use lowercase-hyphen naming for directories and files:
+
+```
+plugin-slug/
+├── plugin-slug.php
+├── uninstall.php
+├── includes/
+├── admin/
+├── public/
+├── assets/
+│   ├── css/
+│   ├── js/
+│   └── images/
+└── languages/
+```
+
+## Hooks & Extensibility
+
+Prefer hooks over direct function calls:
+
+```php
+// Good: Extensible with filters
+$default_value = apply_filters( 'plugin_slug_default_value', 'default', $context );
+
+// Good: Allow modification of output
+$output = apply_filters( 'plugin_slug_output', $output, $args );
+
+// Bad: Hard-coded, not extensible
+$output = 'hardcoded value';
+```
+
+## Error Handling
+
+Use WordPress debug logging and return WP_Error:
+
+```php
+// Good: Proper error handling
+function plugin_slug_process_data( array $data ) {
+    if ( empty( $data ) ) {
+        error_log( 'Plugin Slug: Empty data provided' );
+        return new WP_Error( 'empty_data', __( 'No data provided', 'plugin-slug' ) );
+    }
+    
+    try {
+        // Process data
+        return $processed_data;
+    } catch ( Exception $e ) {
+        error_log( 'Plugin Slug: ' . $e->getMessage() );
+        return new WP_Error( 'processing_failed', __( 'Data processing failed', 'plugin-slug' ) );
+    }
+}
+
+// Bad: Silent failures or die/exit
+function bad_function( $data ) {
+    if ( empty( $data ) ) {
+        die( 'Error' ); // Never do this
+    }
+}
+```
+
+## Plugin Bootstrap
+
+Every plugin must include:
+
+```php
+<?php
+declare( strict_types=1 );
+
+// Prevent direct access
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Plugin Name: Plugin Name
+ * Description: Plugin description
+ * Version: 1.0.0
+ * Author: Your Name
+ * Text Domain: plugin-slug
+ * Domain Path: /languages
+ * Requires at least: 5.0
+ * Tested up to: 6.4
+ * Requires PHP: 7.4
+ * License: GPL v2 or later
+ */
+
+// Define constants
+define( 'PLUGIN_SLUG_VERSION', '1.0.0' );
+define( 'PLUGIN_SLUG_PLUGIN_FILE', __FILE__ );
+define( 'PLUGIN_SLUG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+
+// Load textdomain
+add_action( 'init', 'plugin_slug_load_textdomain' );
+function plugin_slug_load_textdomain() {
+    load_plugin_textdomain( 'plugin-slug', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+}
+
+// Activation/Deactivation hooks
+register_activation_hook( __FILE__, 'plugin_slug_activate' );
+register_deactivation_hook( __FILE__, 'plugin_slug_deactivate' );
+```
+
+## Security Requirements
+
+- Always check capabilities before state-changing operations
+- Use nonces for forms and AJAX requests
+- Sanitize input, escape output
+- Use `$wpdb->prepare()` for all SQL queries
+- Validate and sanitize file uploads
+
+## Internationalization
+
+- Wrap all user-facing strings with `__()`, `_e()`, `esc_html__()`, `esc_html_e()`
+- Use descriptive text domain: `plugin-slug`
+- Load textdomain on `init` hook
+- Include `.pot` file generation in build process

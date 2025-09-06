@@ -1,0 +1,351 @@
+---
+description: "AI-powered pull request review integration"
+globs: [".github/workflows/*.yml"]
+alwaysApply: false
+---
+
+# AI PR Review Integration
+
+## GitHub Actions Workflow
+
+### AI PR Review Workflow
+```yaml
+# .github/workflows/ai-pr-review.yml
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: AI PR Review
+      uses: snarktank/ai-pr-review@v1
+      with:
+        api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+        review_event: ${{ env.REVIEW_EVENT || 'COMMENT' }}
+        system_prompt: |
+          You are an expert WordPress plugin code reviewer. Review this pull request with focus on:
+          
+          **WordPress Standards:**
+          - Follows WordPress PHP Coding Standards
+          - Uses WordPress APIs and hooks appropriately
+          - Implements proper security patterns (nonces, capability checks, sanitization)
+          - Follows WordPress plugin structure and naming conventions
+          
+          **Security Requirements:**
+          - All user input is sanitized and validated
+          - Output is properly escaped
+          - Database queries use prepared statements
+          - File uploads are properly validated
+          - Authentication and authorization are implemented
+          
+          **Code Quality:**
+          - Functions have proper DocBlocks with @since, @param, @return
+          - Code is modular and follows DRY principles
+          - Error handling is implemented appropriately
+          - Performance considerations are addressed
+          
+          **Testing:**
+          - New functionality has corresponding tests
+          - Security-critical code is thoroughly tested
+          - Edge cases are considered
+          
+          **Documentation:**
+          - README and inline documentation are updated
+          - Hooks and filters are documented
+          - API changes are documented
+          
+          Provide specific, actionable feedback with code examples where helpful.
+          Focus on WordPress best practices and security.
+        exclude_files: |
+          **/*.md
+          **/vendor/**
+          **/node_modules/**
+          **/tests/**
+          **/languages/**
+          **/assets/dist/**
+        max_files: 50
+        max_tokens: 4000
+        temperature: 0.1
+```
+
+### Environment Variables
+```yaml
+# .github/workflows/ai-pr-review.yml (environment section)
+env:
+  REVIEW_EVENT: COMMENT  # Options: COMMENT, REQUEST_CHANGES, APPROVE
+  AI_MODEL: claude-3-sonnet-20240229
+  MAX_FILES: 50
+  MAX_TOKENS: 4000
+```
+
+## Required Secrets
+
+### GitHub Secrets Setup
+```bash
+# Required secrets in GitHub repository settings
+ANTHROPIC_API_KEY=sk-ant-api03-...
+# OR
+AMP_API_KEY=your-api-key
+
+# Optional configuration
+REVIEW_EVENT=REQUEST_CHANGES  # For strict gating
+AI_MODEL=claude-3-sonnet-20240229
+```
+
+### Secret Configuration
+1. Go to repository Settings → Secrets and variables → Actions
+2. Add new repository secret:
+   - Name: `ANTHROPIC_API_KEY`
+   - Value: Your Anthropic API key
+3. Optionally add:
+   - Name: `REVIEW_EVENT`
+   - Value: `REQUEST_CHANGES` (for strict gating)
+
+## System Prompt Configuration
+
+### WordPress-Specific System Prompt
+```yaml
+system_prompt: |
+  You are an expert WordPress plugin code reviewer specializing in:
+  
+  **WordPress Plugin Development:**
+  - WordPress coding standards and best practices
+  - Plugin architecture and structure
+  - WordPress APIs and core functions
+  - Hooks, actions, and filters usage
+  - Custom post types and taxonomies
+  - WordPress database interactions
+  
+  **Security Focus:**
+  - Input sanitization and validation
+  - Output escaping and XSS prevention
+  - SQL injection prevention
+  - CSRF protection with nonces
+  - Capability and permission checks
+  - File upload security
+  - Data sanitization and validation
+  
+  **Code Quality Standards:**
+  - WordPress PHP Coding Standards compliance
+  - Proper DocBlock documentation
+  - Error handling and logging
+  - Performance optimization
+  - Memory usage considerations
+  - Database query optimization
+  
+  **Testing Requirements:**
+  - Unit test coverage
+  - Integration test scenarios
+  - Security test cases
+  - Edge case handling
+  - WordPress test environment setup
+  
+  **Review Guidelines:**
+  - Provide specific, actionable feedback
+  - Include code examples for improvements
+  - Focus on WordPress-specific issues
+  - Prioritize security and performance
+  - Consider backward compatibility
+  - Check for proper internationalization
+  
+  Be thorough but concise. Highlight critical issues first.
+```
+
+## Review Event Types
+
+### COMMENT (Default)
+- AI provides feedback as comments
+- Does not block merge
+- Useful for learning and improvement
+
+### REQUEST_CHANGES (Strict)
+- AI can request changes on PR
+- Blocks merge until changes are made
+- Use for critical security or quality issues
+
+### APPROVE
+- AI can approve PRs automatically
+- Use with caution, only for trusted codebases
+- Not recommended for production plugins
+
+## File Exclusions
+
+### Exclude Non-Code Files
+```yaml
+exclude_files: |
+  **/*.md
+  **/vendor/**
+  **/node_modules/**
+  **/tests/**
+  **/languages/**
+  **/assets/dist/**
+  **/coverage/**
+  **/.git/**
+  **/docs/**
+  **/screenshots/**
+```
+
+### Include Only Relevant Files
+```yaml
+include_files: |
+  **/*.php
+  **/*.js
+  **/*.css
+  **/*.scss
+  **/composer.json
+  **/package.json
+  **/webpack.config.js
+```
+
+## Advanced Configuration
+
+### Custom Review Criteria
+```yaml
+# .github/workflows/ai-pr-review.yml
+- name: AI PR Review
+  uses: snarktank/ai-pr-review@v1
+  with:
+    api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    review_event: ${{ env.REVIEW_EVENT || 'COMMENT' }}
+    system_prompt: |
+      Review this WordPress plugin PR with focus on:
+      
+      1. **Security Issues** (Critical):
+         - SQL injection vulnerabilities
+         - XSS vulnerabilities
+         - CSRF protection
+         - Input validation
+         - Output escaping
+         - File upload security
+      
+      2. **WordPress Standards** (High):
+         - WordPress coding standards compliance
+         - Proper use of WordPress APIs
+         - Hook and filter implementation
+         - Database interaction patterns
+         - Plugin structure and naming
+      
+      3. **Code Quality** (Medium):
+         - Function documentation
+         - Error handling
+         - Performance considerations
+         - Code reusability
+         - Test coverage
+      
+      4. **Documentation** (Low):
+         - README updates
+         - Code comments
+         - API documentation
+      
+      Provide specific examples and suggest improvements.
+    max_files: 50
+    max_tokens: 4000
+    temperature: 0.1
+    model: claude-3-sonnet-20240229
+```
+
+### Conditional Review
+```yaml
+# Only review on specific branches or file changes
+- name: AI PR Review
+  if: |
+    github.event.pull_request.base.ref == 'main' &&
+    contains(github.event.pull_request.files.*.filename, '.php')
+  uses: snarktank/ai-pr-review@v1
+  with:
+    # ... configuration
+```
+
+## Integration with Existing Workflows
+
+### Combine with Testing
+```yaml
+# .github/workflows/ci.yml
+name: CI Pipeline
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run tests
+      run: |
+        composer install
+        vendor/bin/phpunit
+        npm test
+  
+  ai-review:
+    runs-on: ubuntu-latest
+    needs: test
+    if: success()
+    steps:
+    - uses: actions/checkout@v4
+    - name: AI PR Review
+      uses: snarktank/ai-pr-review@v1
+      with:
+        # ... AI review configuration
+```
+
+### Review Dependencies
+```yaml
+# AI review only runs after tests pass
+ai-review:
+  runs-on: ubuntu-latest
+  needs: [test, lint, security-scan]
+  if: |
+    always() &&
+    needs.test.result == 'success' &&
+    needs.lint.result == 'success' &&
+    needs.security-scan.result == 'success'
+```
+
+## Monitoring and Metrics
+
+### Review Quality Metrics
+- Review completion rate
+- Issues found vs. resolved
+- False positive rate
+- Developer satisfaction scores
+
+### Performance Metrics
+- Review processing time
+- API usage and costs
+- Workflow execution time
+
+### Security Metrics
+- Security issues detected
+- Critical vulnerabilities found
+- Security review coverage
+
+## Troubleshooting
+
+### Common Issues
+1. **API Key Issues**: Verify secret is correctly set
+2. **Rate Limiting**: Implement retry logic
+3. **Large PRs**: Use file exclusions and limits
+4. **Timeout Issues**: Increase timeout values
+
+### Debug Configuration
+```yaml
+- name: AI PR Review
+  uses: snarktank/ai-pr-review@v1
+  with:
+    api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    debug: true
+    verbose: true
+```

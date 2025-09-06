@@ -1,0 +1,364 @@
+---
+description: "PHP coding standards and documentation requirements"
+globs: ["**/*.php"]
+alwaysApply: false
+---
+
+# PHP Style & Documentation
+
+## WordPress Coding Standards
+
+Follow [WordPress PHP Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/php/) with phpcs.xml configuration:
+
+```xml
+<?xml version="1.0"?>
+<ruleset name="Plugin Slug">
+    <description>WordPress coding standards for Plugin Slug</description>
+    
+    <file>includes/</file>
+    <file>admin/</file>
+    <file>public/</file>
+    <file>plugin-slug.php</file>
+    
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+    
+    <rule ref="WordPress">
+        <exclude name="Generic.Commenting.DocComment.MissingShort"/>
+        <exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
+    </rule>
+    
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array" value="plugin_slug,PLUGIN_SLUG"/>
+        </properties>
+    </rule>
+</ruleset>
+```
+
+## Code Style Examples
+
+### Function Declarations
+```php
+// Good: Proper spacing, type hints, return types
+function plugin_slug_get_user_settings( int $user_id, string $setting_key = '' ): array {
+    if ( empty( $user_id ) ) {
+        return [];
+    }
+    
+    $settings = get_user_meta( $user_id, 'plugin_slug_settings', true );
+    
+    if ( empty( $setting_key ) ) {
+        return $settings ?: [];
+    }
+    
+    return $settings[ $setting_key ] ?? '';
+}
+
+// Bad: Poor formatting, no type hints
+function getSettings($uid,$key=''){
+    $s=get_user_meta($uid,'settings',true);
+    return $key?$s[$key]:$s;
+}
+```
+
+### Class Declarations
+```php
+// Good: Proper class structure with DocBlock
+/**
+ * Handles plugin admin functionality
+ *
+ * @since 1.0.0
+ */
+class Plugin_Slug_Admin {
+    
+    /**
+     * Plugin version
+     *
+     * @since 1.0.0
+     * @var string
+     */
+    private string $version;
+    
+    /**
+     * Constructor
+     *
+     * @since 1.0.0
+     * @param string $version Plugin version
+     */
+    public function __construct( string $version ) {
+        $this->version = $version;
+        $this->init_hooks();
+    }
+    
+    /**
+     * Initialize hooks
+     *
+     * @since 1.0.0
+     */
+    private function init_hooks(): void {
+        add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
+    }
+}
+```
+
+### Array Formatting
+```php
+// Good: Multi-line arrays with proper indentation
+$args = [
+    'post_type'      => 'plugin_slug_item',
+    'post_status'    => 'publish',
+    'posts_per_page' => 10,
+    'meta_query'     => [
+        [
+            'key'     => 'plugin_slug_featured',
+            'value'   => '1',
+            'compare' => '=',
+        ],
+    ],
+];
+
+// Bad: Single line, hard to read
+$args = ['post_type'=>'plugin_slug_item','post_status'=>'publish','posts_per_page'=>10];
+```
+
+## DocBlock Standards
+
+### Function Documentation
+```php
+/**
+ * Retrieves user settings with optional key filtering
+ *
+ * @since 1.0.0
+ * @param int    $user_id     User ID
+ * @param string $setting_key Optional setting key to retrieve
+ * @return array User settings array
+ */
+function plugin_slug_get_user_settings( int $user_id, string $setting_key = '' ): array {
+    // Implementation
+}
+```
+
+### Class Documentation
+```php
+/**
+ * Handles plugin admin functionality
+ *
+ * This class manages all admin-related features including
+ * settings pages, admin notices, and user interface elements.
+ *
+ * @since 1.0.0
+ * @package Plugin_Slug
+ */
+class Plugin_Slug_Admin {
+    // Class implementation
+}
+```
+
+### Method Documentation
+```php
+/**
+ * Enqueues admin scripts and styles
+ *
+ * @since 1.0.0
+ * @param string $hook_suffix Current admin page hook suffix
+ * @return void
+ */
+public function enqueue_admin_scripts( string $hook_suffix ): void {
+    // Implementation
+}
+```
+
+### Hook Documentation
+```php
+/**
+ * Fires after plugin settings are saved
+ *
+ * @since 1.0.0
+ * @param array $settings Saved settings array
+ * @param int   $user_id  User ID who saved settings
+ */
+do_action( 'plugin_slug_settings_saved', $settings, $user_id );
+```
+
+## WordPress API Usage
+
+### Prefer WordPress APIs
+```php
+// Good: Use WordPress APIs
+$posts = get_posts( [
+    'post_type'      => 'plugin_slug_item',
+    'posts_per_page' => 10,
+    'meta_query'     => [
+        [
+            'key'     => 'featured',
+            'value'   => '1',
+            'compare' => '=',
+        ],
+    ],
+] );
+
+// Bad: Direct database queries when WordPress API exists
+global $wpdb;
+$posts = $wpdb->get_results( "SELECT * FROM {$wpdb->posts} WHERE post_type = 'plugin_slug_item'" );
+```
+
+### Options API Usage
+```php
+// Good: Use Options API with proper prefixing
+function plugin_slug_update_setting( string $key, $value ): bool {
+    $key = sanitize_key( $key );
+    return update_option( "plugin_slug_{$key}", $value );
+}
+
+function plugin_slug_get_setting( string $key, $default = null ) {
+    $key = sanitize_key( $key );
+    return get_option( "plugin_slug_{$key}", $default );
+}
+```
+
+### Transients for Caching
+```php
+// Good: Use transients for caching
+function plugin_slug_get_cached_data( string $key ) {
+    $cache_key = "plugin_slug_{$key}";
+    $data = get_transient( $cache_key );
+    
+    if ( false === $data ) {
+        $data = plugin_slug_fetch_expensive_data( $key );
+        set_transient( $cache_key, $data, HOUR_IN_SECONDS );
+    }
+    
+    return $data;
+}
+```
+
+### HTTP API Usage
+```php
+// Good: Use WordPress HTTP API
+function plugin_slug_fetch_remote_data( string $url ): array {
+    $response = wp_remote_get( $url, [
+        'timeout' => 30,
+        'headers' => [
+            'User-Agent' => 'Plugin Slug/1.0.0',
+        ],
+    ] );
+    
+    if ( is_wp_error( $response ) ) {
+        error_log( 'Plugin Slug HTTP Error: ' . $response->get_error_message() );
+        return [];
+    }
+    
+    $body = wp_remote_retrieve_body( $response );
+    return json_decode( $body, true ) ?: [];
+}
+
+// Bad: Use cURL directly
+function bad_fetch_data( $url ) {
+    $ch = curl_init();
+    curl_setopt( $ch, CURLOPT_URL, $url );
+    // ... cURL implementation
+}
+```
+
+## Type Declarations
+
+### Use Type Hints
+```php
+// Good: Type hints for parameters and return types
+function plugin_slug_calculate_total( array $items, float $tax_rate = 0.0 ): float {
+    $subtotal = array_sum( array_column( $items, 'price' ) );
+    return $subtotal * ( 1 + $tax_rate );
+}
+
+// Good: Class properties with type declarations
+class Plugin_Slug_Calculator {
+    private array $items = [];
+    private float $tax_rate = 0.0;
+    
+    public function add_item( array $item ): void {
+        $this->items[] = $item;
+    }
+}
+```
+
+### Arrow Functions (PHP 7.4+)
+```php
+// Good: Use arrow functions for simple operations
+$filtered_items = array_filter( $items, fn( $item ) => $item['active'] === true );
+
+// Good: Arrow functions in array operations
+$prices = array_map( fn( $item ) => $item['price'], $items );
+```
+
+## Error Handling
+
+### Proper Exception Handling
+```php
+// Good: Catch specific exceptions
+function plugin_slug_process_file( string $file_path ): array {
+    try {
+        if ( ! file_exists( $file_path ) ) {
+            throw new InvalidArgumentException( 'File does not exist' );
+        }
+        
+        $content = file_get_contents( $file_path );
+        if ( false === $content ) {
+            throw new RuntimeException( 'Failed to read file' );
+        }
+        
+        return json_decode( $content, true ) ?: [];
+        
+    } catch ( InvalidArgumentException $e ) {
+        error_log( 'Plugin Slug: ' . $e->getMessage() );
+        return new WP_Error( 'file_not_found', $e->getMessage() );
+        
+    } catch ( RuntimeException $e ) {
+        error_log( 'Plugin Slug: ' . $e->getMessage() );
+        return new WP_Error( 'file_read_error', $e->getMessage() );
+    }
+}
+```
+
+## Performance Considerations
+
+### Efficient Database Queries
+```php
+// Good: Use specific fields and limits
+function plugin_slug_get_recent_items( int $limit = 10 ): array {
+    return get_posts( [
+        'post_type'      => 'plugin_slug_item',
+        'post_status'    => 'publish',
+        'posts_per_page' => $limit,
+        'fields'         => 'ids', // Only get IDs for better performance
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+    ] );
+}
+
+// Bad: Get all fields and unlimited results
+function bad_get_items() {
+    return get_posts( [
+        'post_type'      => 'plugin_slug_item',
+        'posts_per_page' => -1, // No limit
+    ] );
+}
+```
+
+### Memory Management
+```php
+// Good: Process large datasets in chunks
+function plugin_slug_process_large_dataset( array $items ): void {
+    $chunks = array_chunk( $items, 100 );
+    
+    foreach ( $chunks as $chunk ) {
+        foreach ( $chunk as $item ) {
+            plugin_slug_process_item( $item );
+        }
+        
+        // Clear memory
+        unset( $chunk );
+    }
+}
+```

@@ -1,0 +1,306 @@
+---
+description: "Test-Driven Development and testing requirements for WordPress plugins"
+globs: ["**/tests/**/*.php", "**/phpunit.xml*", "**/playwright.config.*", "**/package.json"]
+alwaysApply: false
+---
+
+# TDD & Testing
+
+## Test-Driven Development Process
+
+1. **Write failing test first** - Red phase
+2. **Write minimal code to pass** - Green phase  
+3. **Refactor while keeping tests green** - Refactor phase
+4. **Repeat cycle**
+
+## Test Environment Setup
+
+Enable WordPress debugging in test environment:
+
+```php
+// tests/bootstrap.php
+define( 'WP_DEBUG', true );
+define( 'WP_DEBUG_LOG', true );
+define( 'WP_DEBUG_DISPLAY', false );
+define( 'SCRIPT_DEBUG', true );
+
+// Disable object cache during tests
+define( 'WP_CACHE', false );
+```
+
+## Unit Testing with WP_UnitTestCase
+
+```php
+// tests/test-plugin-slug-core.php
+class Test_Plugin_Slug_Core extends WP_UnitTestCase {
+    
+    public function setUp(): void {
+        parent::setUp();
+        // Set up test data
+        $this->user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
+        $this->post_id = $this->factory->post->create( [ 'post_type' => 'plugin_slug_item' ] );
+    }
+    
+    public function tearDown(): void {
+        // Clean up test data
+        wp_delete_user( $this->user_id );
+        wp_delete_post( $this->post_id, true );
+        parent::tearDown();
+    }
+    
+    public function test_plugin_activation_creates_tables() {
+        // Test that activation creates required database tables
+        global $wpdb;
+        
+        $table_name = $wpdb->prefix . 'plugin_slug_items';
+        
+        // Verify table exists
+        $this->assertTrue( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) );
+    }
+    
+    public function test_user_capability_check() {
+        // Test capability verification
+        $this->assertTrue( user_can( $this->user_id, 'manage_options' ) );
+        $this->assertFalse( user_can( $this->user_id, 'non_existent_capability' ) );
+    }
+    
+    public function test_nonce_verification() {
+        // Test nonce generation and verification
+        $nonce = wp_create_nonce( 'plugin_slug_action' );
+        $this->assertTrue( wp_verify_nonce( $nonce, 'plugin_slug_action' ) );
+        $this->assertFalse( wp_verify_nonce( 'invalid_nonce', 'plugin_slug_action' ) );
+    }
+    
+    public function test_input_sanitization() {
+        // Test input sanitization functions
+        $malicious_input = '<script>alert("xss")</script>Hello World';
+        $sanitized = plugin_slug_sanitize_input( $malicious_input );
+        
+        $this->assertEquals( 'Hello World', $sanitized );
+        $this->assertStringNotContainsString( '<script>', $sanitized );
+    }
+    
+    public function test_database_interactions() {
+        // Test database operations
+        $data = [
+            'user_id' => $this->user_id,
+            'title' => 'Test Item',
+            'content' => 'Test content',
+        ];
+        
+        $result = plugin_slug_create_item( $data );
+        $this->assertNotFalse( $result );
+        
+        $item = plugin_slug_get_item( $result );
+        $this->assertEquals( 'Test Item', $item['title'] );
+    }
+    
+    public function test_error_handling() {
+        // Test error conditions
+        $result = plugin_slug_create_item( [] );
+        $this->assertInstanceOf( 'WP_Error', $result );
+        $this->assertEquals( 'empty_data', $result->get_error_code() );
+    }
+}
+```
+
+## Testing Security Patterns
+
+```php
+// tests/test-plugin-slug-security.php
+class Test_Plugin_Slug_Security extends WP_UnitTestCase {
+    
+    public function test_capability_checks() {
+        // Test that operations require proper capabilities
+        $user_id = $this->factory->user->create( [ 'role' => 'subscriber' ] );
+        wp_set_current_user( $user_id );
+        
+        $result = plugin_slug_delete_item( 1 );
+        $this->assertInstanceOf( 'WP_Error', $result );
+        $this->assertEquals( 'insufficient_permissions', $result->get_error_code() );
+    }
+    
+    public function test_nonce_verification() {
+        // Test nonce verification in forms
+        $_POST['plugin_slug_nonce'] = 'invalid_nonce';
+        $_POST['action'] = 'plugin_slug_save';
+        
+        $result = plugin_slug_handle_form_submission();
+        $this->assertInstanceOf( 'WP_Error', $result );
+        $this->assertEquals( 'invalid_nonce', $result->get_error_code() );
+    }
+    
+    public function test_sql_injection_protection() {
+        // Test that prepared statements prevent SQL injection
+        $malicious_input = "'; DROP TABLE wp_posts; --";
+        
+        // This should not cause any database issues
+        $result = plugin_slug_search_items( $malicious_input );
+        $this->assertIsArray( $result );
+        
+        // Verify posts table still exists
+        global $wpdb;
+        $table_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$wpdb->posts}'" );
+        $this->assertNotEmpty( $table_exists );
+    }
+    
+    public function test_xss_protection() {
+        // Test output escaping
+        $malicious_content = '<script>alert("xss")</script><img src="x" onerror="alert(1)">';
+        
+        $escaped = plugin_slug_escape_output( $malicious_content );
+        $this->assertStringNotContainsString( '<script>', $escaped );
+        $this->assertStringNotContainsString( 'onerror=', $escaped );
+    }
+}
+```
+
+## Integration Testing
+
+```php
+// tests/test-plugin-slug-integration.php
+class Test_Plugin_Slug_Integration extends WP_UnitTestCase {
+    
+    public function test_plugin_initialization() {
+        // Test that plugin initializes correctly
+        $this->assertTrue( class_exists( 'Plugin_Slug' ) );
+        $this->assertTrue( function_exists( 'plugin_slug_init' ) );
+    }
+    
+    public function test_hooks_registration() {
+        // Test that hooks are properly registered
+        $this->assertTrue( has_action( 'init', 'plugin_slug_load_textdomain' ) );
+        $this->assertTrue( has_action( 'wp_enqueue_scripts', 'plugin_slug_enqueue_scripts' ) );
+    }
+    
+    public function test_shortcode_registration() {
+        // Test shortcode functionality
+        $output = do_shortcode( '[plugin_slug_display]' );
+        $this->assertStringContainsString( 'plugin-slug-container', $output );
+    }
+    
+    public function test_widget_registration() {
+        // Test widget registration
+        global $wp_widget_factory;
+        $this->assertTrue( isset( $wp_widget_factory->widgets['Plugin_Slug_Widget'] ) );
+    }
+}
+```
+
+## End-to-End Testing with Playwright
+
+```javascript
+// tests/e2e/plugin-slug.spec.js
+const { test, expect } = require('@playwright/test');
+
+test.describe('Plugin Slug E2E Tests', () => {
+  test.beforeEach(async ({ page }) => {
+    // Login as admin
+    await page.goto('/wp-admin');
+    await page.fill('#user_login', 'admin');
+    await page.fill('#user_pass', 'password');
+    await page.click('#wp-submit');
+  });
+
+  test('admin settings page loads correctly', async ({ page }) => {
+    await page.goto('/wp-admin/admin.php?page=plugin-slug-settings');
+    
+    await expect(page.locator('h1')).toContainText('Plugin Slug Settings');
+    await expect(page.locator('#plugin_slug_title')).toBeVisible();
+  });
+
+  test('saves settings successfully', async ({ page }) => {
+    await page.goto('/wp-admin/admin.php?page=plugin-slug-settings');
+    
+    await page.fill('#plugin_slug_title', 'Test Title');
+    await page.fill('#plugin_slug_description', 'Test Description');
+    await page.click('#submit');
+    
+    await expect(page.locator('.notice-success')).toBeVisible();
+  });
+
+  test('frontend display works', async ({ page }) => {
+    await page.goto('/');
+    
+    // Check if plugin content is displayed
+    await expect(page.locator('.plugin-slug-container')).toBeVisible();
+  });
+});
+```
+
+## Test Configuration Files
+
+### phpunit.xml.dist
+```xml
+<?xml version="1.0"?>
+<phpunit
+    bootstrap="tests/bootstrap.php"
+    backupGlobals="false"
+    colors="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    processIsolation="false"
+    stopOnFailure="false"
+    syntaxCheck="false"
+>
+    <testsuites>
+        <testsuite name="Plugin Slug Tests">
+            <directory>tests/</directory>
+        </testsuite>
+    </testsuites>
+    
+    <filter>
+        <whitelist>
+            <directory suffix=".php">includes/</directory>
+            <directory suffix=".php">admin/</directory>
+            <directory suffix=".php">public/</directory>
+            <exclude>
+                <directory>tests/</directory>
+                <directory>vendor/</directory>
+            </exclude>
+        </whitelist>
+    </filter>
+</phpunit>
+```
+
+### tests/bootstrap.php
+```php
+<?php
+/**
+ * PHPUnit bootstrap file
+ */
+
+// Load WordPress test environment
+$_tests_dir = getenv( 'WP_TESTS_DIR' );
+if ( ! $_tests_dir ) {
+    $_tests_dir = '/tmp/wordpress-tests-lib';
+}
+
+require_once $_tests_dir . '/includes/functions.php';
+
+function _manually_load_plugin() {
+    require dirname( dirname( __FILE__ ) ) . '/plugin-slug.php';
+}
+tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
+
+require $_tests_dir . '/includes/bootstrap.php';
+```
+
+## CI/CD Testing Requirements
+
+- Run tests on every push and PR
+- Require all tests to pass before merge
+- Generate coverage reports
+- Test against multiple PHP versions (7.4, 8.0, 8.1, 8.2)
+- Test against multiple WordPress versions
+
+## Test Coverage Requirements
+
+- **Minimum 80% code coverage** for core functionality
+- **100% coverage** for security-critical functions
+- Test all capability checks and nonce verifications
+- Test all database interactions
+- Test all input sanitization and output escaping
+- Test error handling paths
+- Test plugin activation/deactivation hooks

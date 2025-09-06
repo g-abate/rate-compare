@@ -1,0 +1,236 @@
+---
+description: "WordPress plugin file structure and naming conventions"
+globs: ["**/*.php", "**/README.md", "**/readme.txt"]
+alwaysApply: false
+---
+
+# Plugin Structure & Naming
+
+## Canonical Plugin Layout
+
+```
+plugin-slug/
+├── plugin-slug.php          # Main plugin file
+├── uninstall.php            # Cleanup on uninstall
+├── includes/                # Core functionality
+│   ├── class-plugin-slug.php
+│   ├── class-plugin-slug-admin.php
+│   ├── class-plugin-slug-public.php
+│   └── functions.php
+├── admin/                   # Admin-only code
+│   ├── class-plugin-slug-admin.php
+│   ├── partials/
+│   └── css/
+├── public/                  # Frontend code
+│   ├── class-plugin-slug-public.php
+│   ├── partials/
+│   └── css/
+├── assets/                  # Static assets
+│   ├── css/
+│   ├── js/
+│   └── images/
+├── languages/               # Translation files
+│   ├── plugin-slug.pot
+│   └── plugin-slug-{locale}.po
+├── tests/                   # Test files
+│   ├── bootstrap.php
+│   └── test-*.php
+└── vendor/                  # Composer dependencies
+```
+
+## File Naming Conventions
+
+### PHP Files
+- **Main plugin file**: `{plugin-slug}.php`
+- **Classes**: `class-{descriptive-name}.php`
+- **Functions**: `{descriptive-name}.php`
+- **Templates**: `{template-name}.php` in `partials/`
+
+```php
+// Good: Clear, descriptive names
+class Plugin_Slug_Admin_Settings {
+    // Class implementation
+}
+
+// Bad: Unclear or generic names
+class Admin {
+    // Too generic
+}
+```
+
+### Directory Names
+- Use lowercase with hyphens: `admin-settings/`, `public-views/`
+- Avoid underscores in directory names
+- Keep names descriptive but concise
+
+## Naming Prefixes
+
+### Functions
+- Prefix all functions with plugin slug: `plugin_slug_*`
+- Use snake_case for function names
+- Be descriptive but concise
+
+```php
+// Good: Clear prefix and purpose
+function plugin_slug_get_user_settings( int $user_id ): array {
+    // Implementation
+}
+
+function plugin_slug_sanitize_input( string $input ): string {
+    // Implementation
+}
+
+// Bad: No prefix or unclear purpose
+function get_settings( $id ) {
+    // Too generic, no prefix
+}
+```
+
+### Classes
+- Use StudlyCaps with plugin prefix: `Plugin_Slug_*`
+- Namespace classes when possible
+- Group related functionality
+
+```php
+// Good: Clear class hierarchy
+class Plugin_Slug_Admin {
+    // Admin functionality
+}
+
+class Plugin_Slug_Admin_Settings extends Plugin_Slug_Admin {
+    // Settings-specific admin code
+}
+
+// Bad: Unclear hierarchy
+class Settings {
+    // Too generic, no prefix
+}
+```
+
+### Constants
+- Use UPPER_SNAKE_CASE with plugin prefix
+- Make them unique and descriptive
+
+```php
+// Good: Clear, unique constants
+define( 'PLUGIN_SLUG_VERSION', '1.0.0' );
+define( 'PLUGIN_SLUG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'PLUGIN_SLUG_ADMIN_CAPABILITY', 'manage_options' );
+
+// Bad: Generic or unclear constants
+define( 'VERSION', '1.0.0' );
+define( 'DIR', plugin_dir_path( __FILE__ ) );
+```
+
+### Text Domain
+- Use plugin slug as text domain: `plugin-slug`
+- Must match the plugin directory name
+- Use consistently across all files
+
+```php
+// Good: Consistent text domain
+__( 'Settings', 'plugin-slug' );
+esc_html_e( 'Save Changes', 'plugin-slug' );
+
+// Bad: Inconsistent or wrong text domain
+__( 'Settings', 'my-plugin' );
+esc_html_e( 'Save Changes', 'plugin_slug' );
+```
+
+## File Structure Requirements
+
+### Main Plugin File (`plugin-slug.php`)
+Must include:
+- Plugin header with all required fields
+- ABSPATH guard
+- Version constant
+- Text domain loading
+- Activation/deactivation hooks
+
+```php
+<?php
+declare( strict_types=1 );
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Plugin Name: Plugin Name
+ * Description: Plugin description
+ * Version: 1.0.0
+ * Author: Your Name
+ * Text Domain: plugin-slug
+ * Domain Path: /languages
+ * Requires at least: 5.0
+ * Tested up to: 6.4
+ * Requires PHP: 7.4
+ * License: GPL v2 or later
+ */
+
+// Plugin constants and initialization
+```
+
+### Uninstall File (`uninstall.php`)
+- Only runs on plugin uninstall (not deactivation)
+- Remove all plugin data and options
+- Include ABSPATH guard
+
+```php
+<?php
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+    exit;
+}
+
+// Cleanup code here
+```
+
+### Admin vs Public Code
+- Use `is_admin()` to conditionally load admin code
+- Keep admin and public functionality separate
+- Load text domain on `init` hook
+
+```php
+// Load admin code only in admin
+if ( is_admin() ) {
+    require_once PLUGIN_SLUG_PLUGIN_DIR . 'admin/class-plugin-slug-admin.php';
+    new Plugin_Slug_Admin();
+}
+
+// Load public code on frontend
+if ( ! is_admin() ) {
+    require_once PLUGIN_SLUG_PLUGIN_DIR . 'public/class-plugin-slug-public.php';
+    new Plugin_Slug_Public();
+}
+```
+
+## README Structure
+
+### readme.txt (WordPress.org)
+```
+=== Plugin Name ===
+Contributors: yourname
+Tags: tag1, tag2, tag3
+Requires at least: 5.0
+Tested up to: 6.4
+Stable tag: 1.0.0
+Requires PHP: 7.4
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+Description
+Installation
+Frequently Asked Questions
+Screenshots
+Changelog
+Upgrade Notice
+```
+
+### README.md (GitHub)
+- Project description and features
+- Installation instructions
+- Usage examples
+- Hooks and filters documentation
+- Development setup
+- Contributing guidelines
+- License information

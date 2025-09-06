@@ -1,0 +1,296 @@
+---
+description: "WordPress plugin security patterns and input handling"
+globs: ["**/*.php"]
+alwaysApply: false
+---
+
+# Security & Input Handling
+
+## Nonce Verification
+
+All state-changing operations must use nonces:
+
+```php
+// Good: Proper nonce verification
+function plugin_slug_save_settings() {
+    if ( ! wp_verify_nonce( $_POST['plugin_slug_nonce'], 'plugin_slug_save_settings' ) ) {
+        wp_die( __( 'Security check failed', 'plugin-slug' ) );
+    }
+    
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( __( 'Insufficient permissions', 'plugin-slug' ) );
+    }
+    
+    // Process form data
+}
+
+// Form with nonce
+function plugin_slug_settings_form() {
+    wp_nonce_field( 'plugin_slug_save_settings', 'plugin_slug_nonce' );
+    // Form fields
+}
+```
+
+## Capability Checks
+
+Always verify user capabilities:
+
+```php
+// Good: Check capabilities before operations
+function plugin_slug_delete_item( int $item_id ) {
+    if ( ! current_user_can( 'delete_posts' ) ) {
+        return new WP_Error( 'insufficient_permissions', __( 'You cannot delete this item', 'plugin-slug' ) );
+    }
+    
+    // Delete operation
+}
+
+// AJAX handler with capability check
+add_action( 'wp_ajax_plugin_slug_action', 'plugin_slug_ajax_handler' );
+function plugin_slug_ajax_handler() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( __( 'Insufficient permissions', 'plugin-slug' ) );
+    }
+    
+    check_ajax_referer( 'plugin_slug_ajax_nonce', 'nonce' );
+    
+    // AJAX processing
+}
+```
+
+## Input Sanitization
+
+Sanitize all input data:
+
+```php
+// Good: Proper sanitization
+function plugin_slug_process_form_data( array $data ) {
+    $sanitized = [];
+    
+    // Text fields
+    $sanitized['title'] = sanitize_text_field( $data['title'] ?? '' );
+    
+    // Email
+    $sanitized['email'] = sanitize_email( $data['email'] ?? '' );
+    
+    // URL
+    $sanitized['website'] = esc_url_raw( $data['website'] ?? '' );
+    
+    // Key (for database keys)
+    $sanitized['option_key'] = sanitize_key( $data['option_key'] ?? '' );
+    
+    // HTML content with allowed tags
+    $sanitized['content'] = wp_kses_post( $data['content'] ?? '' );
+    
+    // Custom sanitization
+    $sanitized['custom_field'] = plugin_slug_sanitize_custom_field( $data['custom_field'] ?? '' );
+    
+    return $sanitized;
+}
+
+// Custom sanitization function
+function plugin_slug_sanitize_custom_field( string $value ): string {
+    // Remove any non-alphanumeric characters except spaces and hyphens
+    return preg_replace( '/[^a-zA-Z0-9\s\-]/', '', $value );
+}
+```
+
+## Output Escaping
+
+Escape all output data:
+
+```php
+// Good: Proper escaping
+function plugin_slug_display_user_data( array $user_data ) {
+    // HTML content
+    echo '<h2>' . esc_html( $user_data['name'] ) . '</h2>';
+    
+    // HTML attributes
+    echo '<img src="' . esc_url( $user_data['avatar'] ) . '" alt="' . esc_attr( $user_data['name'] ) . '">';
+    
+    // JavaScript variables
+    echo '<script>var userData = ' . wp_json_encode( $user_data ) . ';</script>';
+    
+    // Allowed HTML content
+    echo wp_kses_post( $user_data['description'] );
+}
+
+// Bad: Unescaped output
+function bad_display( $data ) {
+    echo '<h2>' . $data['name'] . '</h2>'; // XSS vulnerability
+    echo '<img src="' . $data['avatar'] . '">'; // XSS vulnerability
+}
+```
+
+## Database Security
+
+Use `$wpdb->prepare()` for all SQL queries:
+
+```php
+// Good: Prepared statements
+function plugin_slug_get_user_items( int $user_id, int $limit = 10 ): array {
+    global $wpdb;
+    
+    $table_name = $wpdb->prefix . 'plugin_slug_items';
+    
+    $query = $wpdb->prepare(
+        "SELECT * FROM {$table_name} WHERE user_id = %d ORDER BY created_at DESC LIMIT %d",
+        $user_id,
+        $limit
+    );
+    
+    return $wpdb->get_results( $query, ARRAY_A );
+}
+
+// Good: Using WordPress APIs instead of direct SQL
+function plugin_slug_get_posts_by_meta( string $meta_key, string $meta_value ): array {
+    return get_posts( [
+        'meta_key' => sanitize_key( $meta_key ),
+        'meta_value' => sanitize_text_field( $meta_value ),
+        'post_type' => 'plugin_slug_item',
+        'posts_per_page' => -1,
+    ] );
+}
+
+// Bad: Direct SQL without preparation
+function bad_query( $user_id ) {
+    global $wpdb;
+    return $wpdb->get_results( "SELECT * FROM items WHERE user_id = $user_id" ); // SQL injection
+}
+```
+
+## Schema Changes with dbDelta
+
+Use `dbDelta()` for safe database schema changes:
+
+```php
+// Good: Safe schema creation
+function plugin_slug_create_tables() {
+    global $wpdb;
+    
+    $table_name = $wpdb->prefix . 'plugin_slug_items';
+    $charset_collate = $wpdb->get_charset_collate();
+    
+    $sql = "CREATE TABLE $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        user_id bigint(20) NOT NULL,
+        title varchar(255) NOT NULL,
+        content longtext,
+        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY user_id (user_id)
+    ) $charset_collate;";
+    
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    dbDelta( $sql );
+}
+
+// Version check for upgrades
+function plugin_slug_check_upgrade() {
+    $current_version = get_option( 'plugin_slug_version', '0.0.0' );
+    
+    if ( version_compare( $current_version, PLUGIN_SLUG_VERSION, '<' ) ) {
+        plugin_slug_upgrade_database( $current_version );
+        update_option( 'plugin_slug_version', PLUGIN_SLUG_VERSION );
+    }
+}
+```
+
+## File Upload Security
+
+Secure file upload handling:
+
+```php
+// Good: Secure file upload
+function plugin_slug_handle_file_upload( array $file ) {
+    // Check if upload is allowed
+    if ( ! current_user_can( 'upload_files' ) ) {
+        return new WP_Error( 'no_permission', __( 'You cannot upload files', 'plugin-slug' ) );
+    }
+    
+    // Verify nonce
+    if ( ! wp_verify_nonce( $_POST['plugin_slug_upload_nonce'], 'plugin_slug_upload' ) ) {
+        return new WP_Error( 'invalid_nonce', __( 'Security check failed', 'plugin-slug' ) );
+    }
+    
+    // Validate file type
+    $allowed_types = [ 'image/jpeg', 'image/png', 'image/gif' ];
+    if ( ! in_array( $file['type'], $allowed_types, true ) ) {
+        return new WP_Error( 'invalid_type', __( 'Invalid file type', 'plugin-slug' ) );
+    }
+    
+    // Validate file size (2MB limit)
+    if ( $file['size'] > 2 * 1024 * 1024 ) {
+        return new WP_Error( 'file_too_large', __( 'File too large', 'plugin-slug' ) );
+    }
+    
+    // Use WordPress upload handler
+    $upload = wp_handle_upload( $file, [ 'test_form' => false ] );
+    
+    if ( isset( $upload['error'] ) ) {
+        return new WP_Error( 'upload_failed', $upload['error'] );
+    }
+    
+    return $upload;
+}
+```
+
+## Options API Security
+
+Safe options handling:
+
+```php
+// Good: Safe options usage
+function plugin_slug_update_option( string $key, $value ) {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return false;
+    }
+    
+    // Sanitize key
+    $key = sanitize_key( $key );
+    
+    // Sanitize value based on type
+    if ( is_string( $value ) ) {
+        $value = sanitize_text_field( $value );
+    } elseif ( is_array( $value ) ) {
+        $value = array_map( 'sanitize_text_field', $value );
+    }
+    
+    return update_option( "plugin_slug_{$key}", $value );
+}
+
+// Good: Safe options retrieval
+function plugin_slug_get_option( string $key, $default = null ) {
+    $key = sanitize_key( $key );
+    return get_option( "plugin_slug_{$key}", $default );
+}
+```
+
+## REST API Security
+
+Secure REST API endpoints:
+
+```php
+// Good: Secure REST API endpoint
+add_action( 'rest_api_init', 'plugin_slug_register_rest_routes' );
+function plugin_slug_register_rest_routes() {
+    register_rest_route( 'plugin-slug/v1', '/items', [
+        'methods' => 'POST',
+        'callback' => 'plugin_slug_create_item',
+        'permission_callback' => function( WP_REST_Request $request ) {
+            return current_user_can( 'edit_posts' );
+        },
+        'args' => [
+            'title' => [
+                'required' => true,
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'content' => [
+                'type' => 'string',
+                'sanitize_callback' => 'wp_kses_post',
+            ],
+        ],
+    ] );
+}
+```
