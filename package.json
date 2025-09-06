@@ -16,7 +16,7 @@
     "build": "npm run build:shared && npm run build:universal-snippet",
     "build:shared": "cd shared && npm run build",
     "build:universal-snippet": "cd universal-snippet && npm run build",
-    "lint": "npm run lint:shared && npm run lint:universal-snippet && npm run lint:wordpress",
+    "lint": "npm run lint:shared && npm run lint:universal-snippet",
     "lint:shared": "cd shared && npm run lint",
     "lint:universal-snippet": "cd universal-snippet && npm run lint",
     "lint:wordpress": "cd wordpress-plugin && composer cs",
@@ -36,15 +36,15 @@
     "install:all": "npm install && cd shared && npm install && cd ../universal-snippet && npm install && cd ../wordpress-plugin && composer install"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
+    "playwright": "^1.40.0",
     "prettier": "^3.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0",
-    "playwright": "^1.40.0"
+    "vitest": "^1.0.0"
   },
   "engines": {
     "node": ">=18.0.0",

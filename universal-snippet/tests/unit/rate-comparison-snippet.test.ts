@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { initRateComparison } from '../../src/index';
 
 describe('Rate Comparison Snippet', () => {
   beforeEach(() => {
@@ -23,8 +24,21 @@ describe('Rate Comparison Snippet', () => {
 
   describe('Initialization', () => {
     it('should be able to initialize without errors', () => {
-      // This is a placeholder test - we'll implement the actual snippet later
-      expect(true).toBe(true);
+      // Test the actual initRateComparison function
+      expect(() => {
+        initRateComparison();
+      }).not.toThrow();
+    });
+
+    it('should log initialization message', () => {
+      // Mock console.log to verify it's called
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      
+      initRateComparison();
+      
+      expect(consoleSpy).toHaveBeenCalledWith('Rate comparison initialized');
+      
+      consoleSpy.mockRestore();
     });
 
     it('should handle missing configuration gracefully', () => {

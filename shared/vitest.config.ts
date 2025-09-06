@@ -6,6 +6,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
+    watch: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -23,6 +24,8 @@ export default defineConfig({
         '**/mocks/**',
         '**/*.config.{js,ts}',
         '**/*.setup.{js,ts}',
+        'src/index.ts', // Entry point with only re-exports
+        '.eslintrc.mjs', // ESLint config file
       ],
       thresholds: {
         global: {
