@@ -11,7 +11,7 @@ permissions:
 
 env:
   # Change to APPROVE / REQUEST_CHANGES / COMMENT
-  REVIEW_EVENT: COMMENT
+  REVIEW_EVENT: APPROVE
   # Configure which CLI to run for the review. Default is amp execute mode.
   REVIEW_CLI_BIN: amp
   REVIEW_CLI_ARGS: -x
