@@ -1,0 +1,351 @@
+---
+description: "GitHub Flow workflow and pull request management"
+globs: [".github/**/*", "**/docs/**/*"]
+alwaysApply: false
+---
+
+# GitHub Flow & Pull Requests
+
+## Branching Strategy
+
+### GitHub Flow Branches
+```
+main (production)
+├── feature/feature-name
+├── bugfix/issue-description
+└── hotfix/critical-fix
+```
+
+### Branch Naming Conventions
+```bash
+# Features
+feature/add-rate-comparison
+feature/improve-admin-interface
+feature/rest-api-endpoints
+
+# Bug Fixes
+bugfix/cache-issue
+bugfix/security-patch
+bugfix/rate-calculation-error
+
+# Hotfixes
+hotfix/security-vulnerability
+hotfix/critical-bug-fix
+```
+
+### Branch Protection Rules
+- **main**: No direct commits, requires PR review, status checks must pass
+- **feature/***: Can be pushed directly by author
+- **bugfix/***: Can be pushed directly by author
+- **hotfix/***: Requires PR review, can merge to main directly (expedited process)
+
+## Commit Standards
+
+### Conventional Commits
+```bash
+# Format: type(scope): description
+feat(admin): add rate comparison settings page
+fix(api): resolve rate calculation error
+docs(readme): update installation instructions
+test(unit): add tests for rate validation
+refactor(core): simplify rate data structure
+perf(api): optimize rate query performance
+chore(deps): update WordPress coding standards
+```
+
+### Commit Types
+- **feat**: New feature
+- **fix**: Bug fix
+- **docs**: Documentation changes
+- **style**: Code style changes (formatting, etc.)
+- **refactor**: Code refactoring
+- **test**: Adding or updating tests
+- **chore**: Maintenance tasks
+- **perf**: Performance improvements
+- **ci**: CI/CD changes
+- **build**: Build system changes
+
+### Commit Message Examples
+```bash
+# Good: Clear, descriptive commits
+feat(admin): add bulk rate import functionality
+fix(security): sanitize user input in rate form
+docs(api): add REST API endpoint documentation
+test(unit): add tests for rate validation functions
+refactor(core): extract rate calculation logic to separate class
+
+# Bad: Unclear or too generic
+fix stuff
+update
+changes
+wip
+```
+
+## Pull Request Process
+
+### PR Template
+```markdown
+## Description
+Brief description of changes and motivation.
+
+## Type of Change
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
+- [ ] Performance improvement
+- [ ] Code refactoring
+
+## Testing
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+- [ ] Cross-browser testing (if applicable)
+- [ ] Mobile testing (if applicable)
+
+## Security Considerations
+- [ ] Input validation implemented
+- [ ] Output escaping applied
+- [ ] Nonce verification added
+- [ ] Capability checks included
+- [ ] SQL injection prevention verified
+
+## Screenshots (if applicable)
+Before and after screenshots for UI changes.
+
+## Checklist
+- [ ] Code follows WordPress coding standards
+- [ ] Self-review completed
+- [ ] Code is properly commented
+- [ ] Documentation updated
+- [ ] No console errors or warnings
+- [ ] Performance impact assessed
+
+## Related Issues
+Closes #123
+Related to #456
+```
+
+### PR Review Checklist
+```markdown
+## Code Review Checklist
+
+### Security
+- [ ] Input sanitization implemented
+- [ ] Output escaping applied
+- [ ] Nonce verification present
+- [ ] Capability checks included
+- [ ] SQL queries use prepared statements
+- [ ] File uploads properly validated
+
+### Code Quality
+- [ ] Follows WordPress coding standards
+- [ ] Functions have proper DocBlocks
+- [ ] No code duplication
+- [ ] Error handling implemented
+- [ ] Performance considerations addressed
+
+### Testing
+- [ ] Unit tests cover new functionality
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+- [ ] Edge cases considered
+
+### Documentation
+- [ ] README updated if needed
+- [ ] Code comments are clear
+- [ ] Hooks and filters documented
+- [ ] API changes documented
+```
+
+## CI/CD Pipeline
+
+### GitHub Actions Workflow
+```yaml
+# .github/workflows/test.yml
+name: Test Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  php-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: [7.4, 8.0, 8.1, 8.2]
+        wordpress-version: [5.0, 6.0, 6.4]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, json, libxml, mbstring, pdo, tokenizer, xml, zip
+    
+    - name: Setup WordPress
+      run: |
+        bash tests/bin/install-wp-tests.sh wordpress_test root '' localhost ${{ matrix.wordpress-version }}
+    
+    - name: Install dependencies
+      run: composer install --no-progress --prefer-dist --optimize-autoloader
+    
+    - name: Run PHPUnit tests
+      run: vendor/bin/phpunit --coverage-clover=coverage.xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+
+  js-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run ESLint
+      run: npm run lint:js
+    
+    - name: Run tests
+      run: npm test
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Install Playwright
+      run: npx playwright install --with-deps
+    
+    - name: Run E2E tests
+      run: npm run test:e2e
+```
+
+### Required Status Checks
+```yaml
+# .github/workflows/required-checks.yml
+name: Required Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  required-checks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check PHP syntax
+      run: find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \;
+    
+    - name: Check for security issues
+      run: |
+        composer require --dev phpstan/phpstan
+        vendor/bin/phpstan analyse --level=5
+    
+    - name: Check coding standards
+      run: |
+        composer require --dev squizlabs/php_codesniffer
+        vendor/bin/phpcs --standard=phpcs.xml
+```
+
+## Release Process
+
+### Release Checklist
+```markdown
+## Release Checklist
+
+### Pre-Release
+- [ ] All tests passing
+- [ ] Code review completed
+- [ ] Documentation updated
+- [ ] Changelog updated
+- [ ] Version numbers updated
+- [ ] Translation files updated
+
+### Release
+- [ ] Update version numbers in main branch
+- [ ] Run full test suite
+- [ ] Create release notes
+- [ ] Tag release
+- [ ] Deploy to production
+
+### Post-Release
+- [ ] Update documentation
+- [ ] Notify stakeholders
+- [ ] Monitor for issues
+```
+
+### Version Numbering
+- **Major** (1.0.0): Breaking changes
+- **Minor** (0.1.0): New features, backward compatible
+- **Patch** (0.0.1): Bug fixes, backward compatible
+
+### Release Notes Template
+```markdown
+## [1.0.0] - 2024-01-15
+
+### Added
+- Rate comparison functionality
+- Admin settings interface
+- REST API endpoints
+- Translation support
+
+### Changed
+- Improved performance for large datasets
+- Updated UI design
+
+### Fixed
+- Fixed rate calculation error
+- Resolved mobile display issues
+
+### Security
+- Enhanced input validation
+- Improved nonce verification
+```
+
+## Code Review Guidelines
+
+### Review Process
+1. **Automated Checks**: CI/CD pipeline must pass
+2. **Self Review**: Author reviews own code first
+3. **Peer Review**: At least one team member review
+4. **Security Review**: Security-sensitive changes require security review
+5. **Final Approval**: Maintainer approval required
+
+### Review Focus Areas
+- **Security**: Input validation, output escaping, authentication
+- **Performance**: Database queries, caching, resource usage
+- **Maintainability**: Code clarity, documentation, test coverage
+- **Compatibility**: WordPress version support, PHP version support
+- **Standards**: WordPress coding standards, plugin guidelines
+
+### Review Response Time
+- **Critical Issues**: Within 4 hours
+- **Regular PRs**: Within 24 hours
+- **Documentation**: Within 48 hours
+- **Holidays/Weekends**: Next business day
