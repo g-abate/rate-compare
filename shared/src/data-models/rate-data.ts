@@ -1,6 +1,6 @@
 /**
  * Rate data models and validation
- * 
+ *
  * @package Rate_Compare
  * @since 1.0.0
  */
@@ -61,9 +61,16 @@ export function validateRateData(data: any): data is RateData {
   }
 
   const requiredFields = [
-    'channel', 'propertyId', 'checkIn', 'checkOut', 
-    'basePrice', 'fees', 'totalPrice', 'currency', 
-    'availability', 'lastUpdated'
+    'channel',
+    'propertyId',
+    'checkIn',
+    'checkOut',
+    'basePrice',
+    'fees',
+    'totalPrice',
+    'currency',
+    'availability',
+    'lastUpdated',
   ];
 
   for (const field of requiredFields) {
@@ -203,7 +210,7 @@ function isValidISODate(dateString: string): boolean {
  */
 export function createRateData(overrides: Partial<RateData> = {}): RateData {
   const now = new Date().toISOString();
-  
+
   return {
     channel: 'airbnb',
     propertyId: '',
@@ -214,13 +221,13 @@ export function createRateData(overrides: Partial<RateData> = {}): RateData {
       cleaning: 0,
       service: 0,
       taxes: 0,
-      other: 0
+      other: 0,
     },
     totalPrice: 0,
     currency: 'USD',
     availability: true,
     lastUpdated: now,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -235,8 +242,8 @@ export function createPropertyConfig(overrides: Partial<PropertyConfig> = {}): P
     settings: {
       displayMode: 'inline',
       theme: 'light',
-      locale: 'en-US'
+      locale: 'en-US',
     },
-    ...overrides
+    ...overrides,
   };
 }
