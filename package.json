@@ -4,26 +4,25 @@
   "description": "Universal rate comparison system for short-term rentals (WordPress plugin + JavaScript snippet)",
   "private": true,
   "workspaces": [
-    "wordpress-plugin",
     "universal-snippet",
     "shared"
   ],
   "scripts": {
-    "test": "npm run test:shared && npm run test:universal-snippet && npm run test:wordpress",
+    "test": "npm run test:shared && npm run test:universal-snippet",
     "test:shared": "cd shared && npm test",
     "test:universal-snippet": "cd universal-snippet && npm test",
-    "test:wordpress": "cd wordpress-plugin && composer test",
+    "test:wordpress-disabled": "echo 'WordPress testing disabled - not building WordPress functionality yet'",
     "build": "npm run build:shared && npm run build:universal-snippet",
     "build:shared": "cd shared && npm run build",
     "build:universal-snippet": "cd universal-snippet && npm run build",
     "lint": "npm run lint:shared && npm run lint:universal-snippet",
     "lint:shared": "cd shared && npm run lint",
     "lint:universal-snippet": "cd universal-snippet && npm run lint",
-    "lint:wordpress": "cd wordpress-plugin && composer cs",
-    "lint:fix": "npm run lint:fix:shared && npm run lint:fix:universal-snippet && npm run lint:fix:wordpress",
+    "lint:wordpress-disabled": "echo 'WordPress linting disabled - not building WordPress functionality yet'",
+    "lint:fix": "npm run lint:fix:shared && npm run lint:fix:universal-snippet",
     "lint:fix:shared": "cd shared && npm run lint:fix",
     "lint:fix:universal-snippet": "cd universal-snippet && npm run lint:fix",
-    "lint:fix:wordpress": "cd wordpress-plugin && composer cs:fix",
+    "lint:fix:wordpress-disabled": "echo 'WordPress linting disabled - not building WordPress functionality yet'",
     "dev": "npm run dev:shared && npm run dev:universal-snippet",
     "dev:shared": "cd shared && npm run dev",
     "dev:universal-snippet": "cd universal-snippet && npm run dev",
@@ -33,7 +32,8 @@
     "typecheck": "npm run typecheck:shared && npm run typecheck:universal-snippet",
     "typecheck:shared": "cd shared && npm run typecheck",
     "typecheck:universal-snippet": "cd universal-snippet && npm run typecheck",
-    "install:all": "npm install && cd shared && npm install && cd ../universal-snippet && npm install && cd ../wordpress-plugin && composer install"
+    "install:all": "npm install && cd shared && npm install && cd ../universal-snippet && npm install",
+    "install:all-with-wordpress-disabled": "echo 'WordPress installation disabled - not building WordPress functionality yet'"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
