@@ -20,6 +20,7 @@ A WordPress plugin for comparing short-term rental rates across multiple booking
 - **REST API**: Complete REST API for integration with other systems
 - **Shortcode Support**: Easy integration with any page or post
 - **AJAX Powered**: Dynamic rate fetching without page reloads
+- **AI-Powered Code Reviews**: Automated pull request reviews using AI
 
 ## 📦 Installation
 
@@ -132,6 +133,59 @@ rateCompare.getRates().then(rates => {
 - **MySQL**: 8.0 or higher
 - **Memory**: 256MB or higher
 - **Object Caching**: Redis or Memcached
+
+## 🤖 AI-Powered Code Reviews
+
+This project includes an AI-powered pull request review system that automatically analyzes code changes and provides intelligent feedback.
+
+### Features
+
+- **WordPress-Specific Reviews**: Focuses on WordPress coding standards and best practices
+- **Security Analysis**: Identifies potential security vulnerabilities and suggests fixes
+- **Performance Optimization**: Highlights performance issues and optimization opportunities
+- **Code Quality**: Provides feedback on code structure, documentation, and maintainability
+- **Automated Workflow**: Triggers automatically on every pull request
+
+### Setup
+
+The AI review system is already configured and ready to use. It uses the [SnarkTank AI PR Review](https://github.com/snarktank/ai-pr-review) workflow with customizations for WordPress plugin development.
+
+#### API Key Configuration
+
+1. **Get an Amp API Key** (recommended):
+   - Visit [ampcode.com](https://ampcode.com) and create a free account
+   - Go to [Settings](https://ampcode.com/settings) and generate an API key
+   - Copy the API key (starts with `sgamp_`)
+
+2. **Set the Secret**:
+   - Go to your repository → Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `AMP_API_KEY`
+   - Value: Your API key
+   - Click "Add secret"
+
+#### Alternative: Claude Code
+
+You can also use Claude Code instead of Amp:
+
+1. Get an API key from [console.anthropic.com](https://console.anthropic.com)
+2. Set the secret as `ANTHROPIC_API_KEY`
+3. The workflow will automatically detect and use Claude Code
+
+### How It Works
+
+1. **Automatic Triggering**: Runs on every pull request (opened, updated, reopened)
+2. **Context Analysis**: Reviews the code changes with WordPress-specific guidelines
+3. **Intelligent Feedback**: Provides detailed comments on security, performance, and code quality
+4. **Status Updates**: Sets commit status to indicate review completion
+
+### Review Focus Areas
+
+- **WordPress Standards**: PHP coding standards, function naming, hooks usage
+- **Security**: Input validation, output escaping, nonce verification, SQL injection prevention
+- **Performance**: Database optimization, caching strategies, asset loading
+- **Code Quality**: Documentation, error handling, maintainability
+- **Plugin Architecture**: Class structure, WordPress integration, best practices
 
 ## 🛠️ Development
 

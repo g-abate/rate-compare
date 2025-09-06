@@ -205,9 +205,21 @@ Closes #123
 ### Review Process
 
 1. **Automated Checks**: CI/CD pipeline must pass
-2. **Code Review**: At least one team member review
-3. **Security Review**: Security-sensitive changes require security review
-4. **Final Approval**: Maintainer approval required
+2. **AI Code Review**: Automated AI review provides intelligent feedback
+3. **Code Review**: At least one team member review
+4. **Security Review**: Security-sensitive changes require security review
+5. **Final Approval**: Maintainer approval required
+
+### AI-Powered Code Reviews
+
+This project includes an AI-powered pull request review system that automatically analyzes your code changes and provides intelligent feedback focused on:
+
+- **WordPress Standards**: Ensures compliance with WordPress coding standards
+- **Security Best Practices**: Identifies potential security vulnerabilities
+- **Performance Optimization**: Highlights performance issues and opportunities
+- **Code Quality**: Provides feedback on structure, documentation, and maintainability
+
+The AI review system is configured to run automatically on every pull request and provides detailed feedback to help improve code quality and maintain WordPress best practices.
 
 ## Issue Reporting
 
