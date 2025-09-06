@@ -30,6 +30,9 @@
     "clean": "npm run clean:shared && npm run clean:universal-snippet",
     "clean:shared": "cd shared && npm run clean",
     "clean:universal-snippet": "cd universal-snippet && npm run clean",
+    "typecheck": "npm run typecheck:shared && npm run typecheck:universal-snippet",
+    "typecheck:shared": "cd shared && npm run typecheck",
+    "typecheck:universal-snippet": "cd universal-snippet && npm run typecheck",
     "install:all": "npm install && cd shared && npm install && cd ../universal-snippet && npm install && cd ../wordpress-plugin && composer install"
   },
   "devDependencies": {

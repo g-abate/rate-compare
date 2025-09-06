@@ -29,7 +29,7 @@ jobs:
         coverage: xdebug
         
     - name: Cache Composer dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: wordpress-plugin/vendor
         key: composer-${{ matrix.php-version }}-${{ hashFiles('wordpress-plugin/composer.lock') }}
@@ -59,7 +59,7 @@ jobs:
       run: composer cs
       
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: wordpress-plugin/coverage.xml
         flags: wordpress
@@ -100,7 +100,7 @@ jobs:
       run: npm run build:shared
       
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: shared/coverage/lcov.info
         flags: shared
@@ -141,7 +141,7 @@ jobs:
       run: npm run build:universal-snippet
       
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: universal-snippet/coverage/lcov.info
         flags: universal-snippet
@@ -172,7 +172,7 @@ jobs:
       run: npx playwright test
       
     - name: Upload E2E test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: playwright-report
