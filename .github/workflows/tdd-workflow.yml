@@ -77,47 +77,41 @@ jobs:
     - name: Run tests with coverage
       run: |
         # Run shared library tests
-        cd shared && npm test -- --coverage --reporter=json --outputFile=coverage.json
+        cd shared && npm run test:coverage
         
         # Run universal snippet tests
-        cd ../universal-snippet && npm test -- --coverage --reporter=json --outputFile=coverage.json
+        cd ../universal-snippet && npm run test:coverage
         
     - name: Check coverage thresholds
       run: |
         echo "🔍 Checking test coverage..."
         
         # Check shared library coverage
-        if [ -f shared/coverage.json ]; then
-          # Try different coverage formats
-          SHARED_COVERAGE=$(node -p "
-            const coverage = JSON.parse(require('fs').readFileSync('shared/coverage.json', 'utf8'));
-            const summary = coverage.summary || coverage.total || coverage;
-            const lines = summary.lines || summary.statements || summary;
-            lines.pct || lines.percentage || 0
-          " 2>/dev/null || echo "0")
+        if [ -f shared/coverage/lcov.info ]; then
+          SHARED_COVERAGE=$(grep -E "^(LF|LH):" shared/coverage/lcov.info | awk -F: 'BEGIN{lf=0;lh=0} /^LF:/{lf+=$2} /^LH:/{lh+=$2} END{print (lh/lf)*100}')
           echo "Shared library coverage: ${SHARED_COVERAGE}%"
           
           if (( $(echo "$SHARED_COVERAGE < 80" | bc -l) )); then
             echo "❌ Shared library coverage below 80%: ${SHARED_COVERAGE}%"
             exit 1
           fi
+        else
+          echo "❌ Shared library coverage file not found"
+          exit 1
         fi
         
         # Check universal snippet coverage
-        if [ -f universal-snippet/coverage.json ]; then
-          # Try different coverage formats
-          UNIVERSAL_COVERAGE=$(node -p "
-            const coverage = JSON.parse(require('fs').readFileSync('universal-snippet/coverage.json', 'utf8'));
-            const summary = coverage.summary || coverage.total || coverage;
-            const lines = summary.lines || summary.statements || summary;
-            lines.pct || lines.percentage || 0
-          " 2>/dev/null || echo "0")
+        if [ -f universal-snippet/coverage/lcov.info ]; then
+          UNIVERSAL_COVERAGE=$(grep -E "^(LF|LH):" universal-snippet/coverage/lcov.info | awk -F: 'BEGIN{lf=0;lh=0} /^LF:/{lf+=$2} /^LH:/{lh+=$2} END{print (lh/lf)*100}')
           echo "Universal snippet coverage: ${UNIVERSAL_COVERAGE}%"
           
           if (( $(echo "$UNIVERSAL_COVERAGE < 80" | bc -l) )); then
             echo "❌ Universal snippet coverage below 80%: ${UNIVERSAL_COVERAGE}%"
             exit 1
           fi
+        else
+          echo "❌ Universal snippet coverage file not found"
+          exit 1
         fi
         
         echo "✅ Coverage thresholds met"

@@ -64,8 +64,9 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev:universal-snippet',
+    command: 'npm run build:universal-snippet && node tests/e2e/server.js',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000, // 2 minutes
   },
 });

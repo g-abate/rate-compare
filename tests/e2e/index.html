@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Compare Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .rate-compare-widget {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rate Compare Test Page</h1>
+    <p>This page is used for testing the Rate Compare widget.</p>
+    
+    <div class="rate-compare-widget" data-rate-compare>
+        <h2>Rate Comparison Widget</h2>
+        <p>Loading rates...</p>
+    </div>
+    
+    <!-- Load the Rate Compare script -->
+    <script src="/dist/rate-compare.umd.js"></script>
+    <script>
+        // Initialize the rate comparison widget
+        if (typeof initRateComparison === 'function') {
+            initRateComparison();
+        }
+    </script>
+</body>
+</html>

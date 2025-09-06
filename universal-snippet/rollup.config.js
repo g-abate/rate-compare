@@ -32,6 +32,7 @@ export default [
         tsconfig: './tsconfig.json',
         declaration: true,
         declarationDir: './dist',
+        declarationMap: false,
       }),
     ],
     external: ['@rate-compare/shared'],
