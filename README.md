@@ -315,3 +315,17 @@ For security vulnerabilities, please:
 ---
 
 **Made with ❤️ for the WordPress community**
+# Test AI PR Review
+
+This is a test pull request to verify the AI PR review workflow is working correctly.
+
+## Changes Made
+- Added AI PR review workflow
+- Created AGENT.md with WordPress guidelines
+- Added setup script for API key configuration
+
+## Testing
+- [ ] AI review should trigger automatically
+- [ ] Review should focus on WordPress standards
+- [ ] Security and performance should be highlighted
+- [ ] Code quality feedback should be provided
