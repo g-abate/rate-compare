@@ -95,6 +95,18 @@ jobs:
                 curl -fsSL https://ampcode.com/install.sh | bash
               }
               command -v amp >/dev/null 2>&1 || { echo "amp not found after install" >&2; exit 1; }
+              # Set up amp with API key for non-interactive use
+              echo "Setting up amp with API key..."
+              export AMP_API_KEY="${AMP_API_KEY:-${AI_API_KEY:-}}"
+              if [ -n "$AMP_API_KEY" ]; then
+                echo "AMP_API_KEY is set, configuring amp..."
+                # Create amp config directory and set API key
+                mkdir -p ~/.amp
+                echo "$AMP_API_KEY" > ~/.amp/api_key
+                echo "API key configured for amp"
+              else
+                echo "No AMP_API_KEY found, amp will need authentication"
+              fi
               amp --version
             elif [ "$REVIEW_CLI_BIN" = "claude" ]; then
               echo "Installing claude via npm..."
@@ -190,25 +202,78 @@ jobs:
           echo "Command: $REVIEW_CLI_BIN $REVIEW_CLI_ARGS"
           echo "Diff size: $(wc -c < diff.patch) bytes"
           
+          # Ensure API key is available for the command
+          if [ "$REVIEW_CLI_BIN" = "amp" ] && [ -n "$AMP_API_KEY" ]; then
+            echo "Using AMP_API_KEY for amp command"
+            export AMP_API_KEY="$AMP_API_KEY"
+          elif [ "$REVIEW_CLI_BIN" = "claude" ] && [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "Using ANTHROPIC_API_KEY for claude command"
+            export ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"
+          fi
+          
           MAX_RETRIES=5
           RETRY_COUNT=0
           
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             echo "Attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES..."
             
-            if cat diff.patch | timeout 300 "$REVIEW_CLI_BIN" $REVIEW_CLI_ARGS "${SYSTEM_PROMPT}
+            # Try CLI first, then fallback to direct API call
+            if [ "$REVIEW_CLI_BIN" = "amp" ] && [ -n "$AMP_API_KEY" ]; then
+              # Try amp CLI with API key
+              if cat diff.patch | timeout 300 "$REVIEW_CLI_BIN" $REVIEW_CLI_ARGS "${SYSTEM_PROMPT}
 
-          ${INSTRUCTION}" > ai_output.xml; then
-              # Check if output contains valid XML with required elements
-              if grep -q "<review>" ai_output.xml && grep -q "<summary>" ai_output.xml && grep -q "</review>" ai_output.xml; then
-                echo "Valid XML review received"
-                break
+          ${INSTRUCTION}" > ai_output.xml 2>/dev/null; then
+                echo "Amp CLI succeeded"
               else
-                echo "Invalid or empty XML received, retrying..."
-                RETRY_COUNT=$((RETRY_COUNT + 1))
+                echo "Amp CLI failed, trying direct API call..."
+                # Fallback to direct API call
+                if [ -n "$AMP_API_KEY" ]; then
+                  # Use curl to call Amp API directly
+                  curl -s -X POST "https://api.ampcode.com/v1/chat/completions" \
+                    -H "Authorization: Bearer $AMP_API_KEY" \
+                    -H "Content-Type: application/json" \
+                    -d "{
+                      \"model\": \"gpt-4\",
+                      \"messages\": [
+                        {\"role\": \"system\", \"content\": \"${SYSTEM_PROMPT}\n\n${INSTRUCTION}\"},
+                        {\"role\": \"user\", \"content\": \"$(cat diff.patch | sed 's/"/\\"/g' | tr '\n' '\\n')\"}
+                      ],
+                      \"max_tokens\": 4000,
+                      \"temperature\": 0.1
+                    }" > ai_output_raw.json
+                  
+                  # Extract content from JSON response
+                  if command -v jq >/dev/null 2>&1; then
+                    jq -r '.choices[0].message.content' ai_output_raw.json > ai_output.xml
+                  else
+                    # Fallback JSON parsing
+                    grep -o '"content":"[^"]*"' ai_output_raw.json | sed 's/"content":"//g' | sed 's/"$//g' > ai_output.xml
+                  fi
+                else
+                  echo "No API key available for fallback"
+                  RETRY_COUNT=$((RETRY_COUNT + 1))
+                  continue
+                fi
               fi
             else
-              echo "AI call failed, retrying..."
+              # Use original CLI approach
+              if cat diff.patch | timeout 300 "$REVIEW_CLI_BIN" $REVIEW_CLI_ARGS "${SYSTEM_PROMPT}
+
+          ${INSTRUCTION}" > ai_output.xml; then
+                echo "CLI succeeded"
+              else
+                echo "CLI failed, retrying..."
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                continue
+              fi
+            fi
+            
+            # Check if output contains valid XML with required elements
+            if grep -q "<review>" ai_output.xml && grep -q "<summary>" ai_output.xml && grep -q "</review>" ai_output.xml; then
+              echo "Valid XML review received"
+              break
+            else
+              echo "Invalid or empty XML received, retrying..."
               RETRY_COUNT=$((RETRY_COUNT + 1))
             fi
             
