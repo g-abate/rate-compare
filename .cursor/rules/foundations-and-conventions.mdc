@@ -1,6 +1,6 @@
 ---
-description: "Core WordPress plugin development principles and conventions"
-globs: ["**/*.php", "**/*.js", "**/*.css", "**/*.scss", "**/*.md"]
+description: "Core WordPress plugin development principles and conventions for monorepo"
+globs: ["wordpress-plugin/**/*.php", "wordpress-plugin/**/*.js", "wordpress-plugin/**/*.css", "wordpress-plugin/**/*.scss", "wordpress-plugin/**/*.md"]
 alwaysApply: true
 ---
 
@@ -30,11 +30,11 @@ function getPrefs($uid){return get_user_meta($uid,'prefs',true);}
 
 ## Directory Structure
 
-Use lowercase-hyphen naming for directories and files:
+Use lowercase-hyphen naming for directories and files within the WordPress plugin directory:
 
 ```
-plugin-slug/
-├── plugin-slug.php
+wordpress-plugin/
+├── rate-compare.php
 ├── uninstall.php
 ├── includes/
 ├── admin/
@@ -45,6 +45,8 @@ plugin-slug/
 │   └── images/
 └── languages/
 ```
+
+**Note**: This rule applies specifically to the `wordpress-plugin/` directory within the monorepo. For shared code, see the shared rules.
 
 ## Hooks & Extensibility
 

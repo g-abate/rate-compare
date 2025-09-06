@@ -1,0 +1,75 @@
+{
+    "name": "g-abate/rate-compare",
+    "description": "A WordPress plugin for comparing short-term rental rates across multiple booking channels",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Gideon Abate",
+            "email": "gideon@example.com",
+            "homepage": "https://github.com/g-abate"
+        }
+    ],
+    "keywords": [
+        "wordpress",
+        "plugin",
+        "rate-comparison",
+        "short-term-rental",
+        "airbnb",
+        "vrbo",
+        "booking.com"
+    ],
+    "homepage": "https://github.com/g-abate/rate-compare",
+    "support": {
+        "issues": "https://github.com/g-abate/rate-compare/issues",
+        "source": "https://github.com/g-abate/rate-compare"
+    },
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6",
+        "yoast/phpunit-polyfills": "^1.0",
+        "squizlabs/php_codesniffer": "^3.7",
+        "phpstan/phpstan": "^1.10",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "wp-coding-standards/wpcs": "^3.0",
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "brain/monkey": "^2.6",
+        "mockery/mockery": "^1.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rate_Compare\\": "includes/"
+        },
+        "files": [
+            "includes/functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rate_Compare\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-html coverage",
+        "cs": "phpcs",
+        "cs:fix": "phpcbf",
+        "stan": "phpstan analyse",
+        "quality": [
+            "@cs",
+            "@stan",
+            "@test"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

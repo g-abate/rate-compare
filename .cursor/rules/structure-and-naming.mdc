@@ -1,28 +1,70 @@
 ---
-description: "WordPress plugin file structure and naming conventions"
-globs: ["**/*.php", "**/README.md", "**/readme.txt"]
+description: "WordPress plugin file structure and naming conventions for monorepo"
+globs: ["wordpress-plugin/**/*.php", "wordpress-plugin/**/README.md", "wordpress-plugin/**/readme.txt"]
 alwaysApply: false
 ---
 
 # Plugin Structure & Naming
 
-## Canonical Plugin Layout
+## Monorepo Structure
 
 ```
-plugin-slug/
-├── plugin-slug.php          # Main plugin file
+ratecompare/                 # Root monorepo
+├── wordpress-plugin/        # WordPress plugin directory
+│   ├── rate-compare.php     # Main plugin file
+│   ├── uninstall.php        # Cleanup on uninstall
+│   ├── includes/            # Core functionality
+│   │   ├── class-rate-compare.php
+│   │   ├── class-rate-compare-admin.php
+│   │   ├── class-rate-compare-public.php
+│   │   └── functions.php
+│   ├── admin/               # Admin-only code
+│   │   ├── class-rate-compare-admin.php
+│   │   ├── partials/
+│   │   └── css/
+│   ├── public/              # Frontend code
+│   │   ├── class-rate-compare-public.php
+│   │   ├── partials/
+│   │   └── css/
+│   ├── assets/              # Static assets
+│   │   ├── css/
+│   │   ├── js/
+│   │   └── images/
+│   ├── languages/           # Translation files
+│   │   ├── rate-compare.pot
+│   │   └── rate-compare-{locale}.po
+│   ├── tests/               # Test files
+│   │   ├── bootstrap.php
+│   │   └── test-*.php
+│   └── vendor/              # Composer dependencies
+├── universal-snippet/       # Universal JavaScript snippet
+│   ├── src/                 # Source code
+│   ├── dist/                # Built files
+│   ├── config-panel/        # Configuration web app
+│   └── examples/            # Integration examples
+├── shared/                  # Shared core logic
+│   ├── src/                 # Shared source code
+│   └── tests/               # Shared tests
+└── docs/                    # Documentation
+```
+
+## WordPress Plugin Layout (within wordpress-plugin/)
+
+```
+wordpress-plugin/
+├── rate-compare.php         # Main plugin file
 ├── uninstall.php            # Cleanup on uninstall
 ├── includes/                # Core functionality
-│   ├── class-plugin-slug.php
-│   ├── class-plugin-slug-admin.php
-│   ├── class-plugin-slug-public.php
+│   ├── class-rate-compare.php
+│   ├── class-rate-compare-admin.php
+│   ├── class-rate-compare-public.php
 │   └── functions.php
 ├── admin/                   # Admin-only code
-│   ├── class-plugin-slug-admin.php
+│   ├── class-rate-compare-admin.php
 │   ├── partials/
 │   └── css/
 ├── public/                  # Frontend code
-│   ├── class-plugin-slug-public.php
+│   ├── class-rate-compare-public.php
 │   ├── partials/
 │   └── css/
 ├── assets/                  # Static assets
@@ -30,8 +72,8 @@ plugin-slug/
 │   ├── js/
 │   └── images/
 ├── languages/               # Translation files
-│   ├── plugin-slug.pot
-│   └── plugin-slug-{locale}.po
+│   ├── rate-compare.pot
+│   └── rate-compare-{locale}.po
 ├── tests/                   # Test files
 │   ├── bootstrap.php
 │   └── test-*.php

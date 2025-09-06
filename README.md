@@ -1,385 +1,185 @@
-# Rate Compare Plugin
+# Rate Compare - Universal Rate Comparison System
 
-A WordPress plugin for comparing short-term rental rates across multiple booking channels including Airbnb, VRBO, Booking.com, and OwnerRez.
+A comprehensive rate comparison system for short-term rental properties, available as both a WordPress plugin and a universal JavaScript snippet.
 
-[![WordPress Plugin](https://img.shields.io/badge/WordPress-Plugin-blue.svg)](https://wordpress.org/plugins/)
-[![PHP Version](https://img.shields.io/badge/PHP-7.4%2B-blue.svg)](https://php.net/)
-[![WordPress Version](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
-[![License](https://img.shields.io/badge/License-GPL%20v2%2B-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Build Status](https://github.com/g-abate/rate-compare/workflows/Required%20Checks/badge.svg)](https://github.com/g-abate/rate-compare/actions)
+## 🏗️ Monorepo Structure
 
-## 🚀 Features
+This repository contains three main packages:
 
-- **Multi-Channel Rate Comparison**: Compare rates from Airbnb, VRBO, Booking.com, and OwnerRez
-- **Real-Time Rate Fetching**: Automatically fetch and update rates from external APIs and web scraping
-- **Smart Caching**: 15-minute caching system for optimal performance
-- **Admin Interface**: Easy configuration and management of channel settings
-- **Responsive Design**: Mobile-friendly rate comparison popup
-- **Security First**: Comprehensive input validation and output escaping
-- **Translation Ready**: Full internationalization support
-- **REST API**: Complete REST API for integration with other systems
-- **Shortcode Support**: Easy integration with any page or post
-- **AJAX Powered**: Dynamic rate fetching without page reloads
-- **AI-Powered Code Reviews**: Automated pull request reviews using AI
+- **`wordpress-plugin/`** - WordPress plugin for rate comparison
+- **`universal-snippet/`** - Universal JavaScript snippet for any website
+- **`shared/`** - Shared core logic and utilities
 
-## 📦 Installation
-
-### From WordPress Admin
-
-1. Go to **Plugins** → **Add New**
-2. Search for "Rate Compare"
-3. Click **Install Now** and then **Activate**
-
-### Manual Installation
-
-1. Download the plugin files
-2. Upload to `/wp-content/plugins/rate-compare/`
-3. Activate the plugin through the 'Plugins' menu in WordPress
-4. Configure your channel settings in the admin panel
-
-### Via WP-CLI
-
-```bash
-wp plugin install rate-compare --activate
-```
-
-## ⚙️ Configuration
-
-### Initial Setup
-
-1. Go to **Rate Compare** in your WordPress admin menu
-2. Add your property URLs for each channel:
-   - **Airbnb**: `https://airbnb.com/rooms/your-listing-id`
-   - **VRBO**: `https://vrbo.com/your-listing-url`
-   - **Booking.com**: `https://booking.com/your-listing-url`
-3. Configure your OwnerRez API credentials
-4. Set up rate fetching schedules and caching preferences
-
-### Channel Configuration
-
-#### Airbnb
-- Add your Airbnb listing URL
-- The plugin will automatically extract the listing ID
-- Supports both individual rooms and entire homes
-
-#### VRBO
-- Add your VRBO property URL
-- Supports both individual properties and property groups
-- Automatic property ID extraction
-
-#### Booking.com
-- Add your Booking.com property URL
-- Supports hotels, apartments, and vacation rentals
-- Automatic property ID extraction
-
-#### OwnerRez
-- Add your OwnerRez API credentials
-- Configure property mappings
-- Set up rate fetching schedules
-
-### Advanced Settings
-
-- **Caching**: Configure cache duration (default: 15 minutes)
-- **Rate Limiting**: Set request limits to prevent API abuse
-- **Error Handling**: Configure retry logic and error notifications
-- **Logging**: Enable detailed logging for debugging
-
-## 🎯 Usage
-
-### Shortcode
-
-Display rate comparison on any page or post:
-
-```shortcode
-[rate_compare property_id="123" check_in="2024-01-15" check_out="2024-01-20"]
-```
-
-### REST API
-
-Get rates programmatically:
-
-```bash
-GET /wp-json/rate-compare/v1/rates?property_id=123&check_in=2024-01-15&check_out=2024-01-20
-```
-
-### JavaScript API
-
-```javascript
-// Initialize rate comparison
-const rateCompare = new RateCompare({
-    propertyId: 123,
-    checkIn: '2024-01-15',
-    checkOut: '2024-01-20'
-});
-
-// Fetch rates
-rateCompare.getRates().then(rates => {
-    console.log('Rates:', rates);
-});
-```
-
-## 📋 Requirements
-
-- **WordPress**: 5.0 or higher
-- **PHP**: 7.4 or higher
-- **MySQL**: 5.6 or higher
-- **Memory**: 128MB minimum (256MB recommended)
-- **Disk Space**: 10MB for plugin files
-
-### Recommended
-
-- **WordPress**: 6.0 or higher
-- **PHP**: 8.0 or higher
-- **MySQL**: 8.0 or higher
-- **Memory**: 256MB or higher
-- **Object Caching**: Redis or Memcached
-
-## 🤖 AI-Powered Code Reviews
-
-This project includes an AI-powered pull request review system that automatically analyzes code changes and provides intelligent feedback.
-
-### Features
-
-- **WordPress-Specific Reviews**: Focuses on WordPress coding standards and best practices
-- **Security Analysis**: Identifies potential security vulnerabilities and suggests fixes
-- **Performance Optimization**: Highlights performance issues and optimization opportunities
-- **Code Quality**: Provides feedback on code structure, documentation, and maintainability
-- **Automated Workflow**: Triggers automatically on every pull request
-
-### Setup
-
-The AI review system is already configured and ready to use. It uses the [SnarkTank AI PR Review](https://github.com/snarktank/ai-pr-review) workflow with customizations for WordPress plugin development.
-
-#### API Key Configuration
-
-1. **Get an Amp API Key** (recommended):
-   - Visit [ampcode.com](https://ampcode.com) and create a free account
-   - Go to [Settings](https://ampcode.com/settings) and generate an API key
-   - Copy the API key (starts with `sgamp_`)
-
-2. **Set the Secret**:
-   - Go to your repository → Settings → Secrets and variables → Actions
-   - Click "New repository secret"
-   - Name: `AMP_API_KEY`
-   - Value: Your API key
-   - Click "Add secret"
-
-#### Alternative: Claude Code
-
-You can also use Claude Code instead of Amp:
-
-1. Get an API key from [console.anthropic.com](https://console.anthropic.com)
-2. Set the secret as `ANTHROPIC_API_KEY`
-3. The workflow will automatically detect and use Claude Code
-
-### How It Works
-
-1. **Automatic Triggering**: Runs on every pull request (opened, updated, reopened)
-2. **Context Analysis**: Reviews the code changes with WordPress-specific guidelines
-3. **Intelligent Feedback**: Provides detailed comments on security, performance, and code quality
-4. **Status Updates**: Sets commit status to indicate review completion
-
-### Review Focus Areas
-
-- **WordPress Standards**: PHP coding standards, function naming, hooks usage
-- **Security**: Input validation, output escaping, nonce verification, SQL injection prevention
-- **Performance**: Database optimization, caching strategies, asset loading
-- **Code Quality**: Documentation, error handling, maintainability
-- **Plugin Architecture**: Class structure, WordPress integration, best practices
-
-## 🛠️ Development
-
-This plugin follows WordPress coding standards and uses Test-Driven Development (TDD) approach.
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- WordPress development environment
-- PHP 7.4+
-- Node.js 18+
-- Composer
-- Git
+- Node.js 18+ and npm 9+
+- PHP 7.4+ (for WordPress plugin)
+- Composer (for WordPress plugin)
 
-### Setup Development Environment
+### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/g-abate/rate-compare.git
-cd rate-compare
+# Install all dependencies
+npm run install:all
 
-# Install PHP dependencies
-composer install
-
-# Install Node.js dependencies
-npm install
-
-# Set up WordPress test environment
-bash tests/bin/install-wp-tests.sh wordpress_test root '' localhost latest
-
-# Run tests
-composer test
-npm test
-npm run test:e2e
+# Or install individually
+npm install                    # Root dependencies
+cd shared && npm install       # Shared library
+cd ../universal-snippet && npm install  # Universal snippet
+cd ../wordpress-plugin && composer install  # WordPress plugin
 ```
 
-### Development Workflow
+### Development
 
-1. **Create Feature Branch**
-   ```bash
-   git checkout -b feature/your-feature-name main
-   ```
+```bash
+# Run all tests
+npm test
 
-2. **Follow TDD Approach**
-   - Write failing tests first
-   - Implement functionality
-   - Refactor while keeping tests green
+# Run tests for specific package
+npm run test:shared
+npm run test:universal-snippet
+npm run test:wordpress
 
-3. **Run Tests**
-   ```bash
-   composer test
-   npm test
-   ```
+# Build all packages
+npm run build
 
-4. **Commit Changes**
-   ```bash
-   git add .
-   git commit -m "feat: add your feature description"
-   ```
+# Build specific package
+npm run build:shared
+npm run build:universal-snippet
 
-5. **Push and Create PR**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+# Development mode
+npm run dev
+```
 
-### Branching Strategy
+## 📦 Packages
 
-This project uses **GitHub Flow**:
+### WordPress Plugin (`wordpress-plugin/`)
 
-- `main` - Production-ready code
-- `feature/*` - New features (e.g., `feature/rate-comparison`)
-- `bugfix/*` - Bug fixes (e.g., `bugfix/cache-issue`)
-- `hotfix/*` - Critical production fixes
+A full-featured WordPress plugin that provides:
+- Admin interface for configuration
+- Frontend rate comparison display
+- Integration with WordPress hooks and filters
+- Database management for configurations
+
+**Installation:**
+1. Upload the `wordpress-plugin/` folder to `/wp-content/plugins/`
+2. Activate the plugin in WordPress admin
+3. Configure your property listings
+
+### Universal Snippet (`universal-snippet/`)
+
+A lightweight JavaScript snippet that works on any website:
+- Zero dependencies
+- CDN distribution
+- Configuration panel for non-technical users
+- Mobile-first responsive design
+
+**Installation:**
+```html
+<script>
+(function(){
+  if (window.__rateCompareLoaded) return; 
+  window.__rateCompareLoaded = true;
+  var s = document.createElement('script');
+  s.async = true; s.defer = true; 
+  s.src = 'https://cdn.example.com/rate-compare.umd.js';
+  (document.head || document.documentElement).appendChild(s);
+})();
+</script>
+```
+
+### Shared Library (`shared/`)
+
+Core logic shared between WordPress plugin and universal snippet:
+- Rate fetching from multiple channels (Airbnb, VRBO, Booking.com, Expedia)
+- Data validation and normalization
+- Caching strategies
+- Error handling
+
+## 🛠️ Development
+
+### Code Quality
+
+```bash
+# Lint all code
+npm run lint
+
+# Fix linting issues
+npm run lint:fix
+
+# Type checking
+npm run typecheck
+```
 
 ### Testing
 
-- **Unit Tests**: PHPUnit for PHP code
-- **Integration Tests**: WordPress test suite
-- **End-to-End Tests**: Playwright for browser testing
-- **Code Coverage**: Minimum 80% coverage required
+```bash
+# Unit tests
+npm test
+
+# E2E tests
+npm run test:e2e
+
+# Coverage reports
+npm run test:coverage
+```
+
+### Building
+
+```bash
+# Build all packages
+npm run build
+
+# Clean build artifacts
+npm run clean
+```
+
+## 📋 Supported Channels
+
+- **Airbnb** - Web scraping and API integration
+- **VRBO** - Web scraping and API integration  
+- **Booking.com** - Web scraping and API integration
+- **Expedia** - Web scraping and API integration
+
+## 🔧 Configuration
+
+Both the WordPress plugin and universal snippet support:
+- Multiple property configurations
+- Custom theming and branding
+- Date range selection
+- Real-time rate fetching
+- Caching for performance
+
+## 📚 Documentation
+
+- [WordPress Plugin Documentation](wordpress-plugin/README.md)
+- [Universal Snippet Documentation](universal-snippet/README.md)
+- [Shared Library Documentation](shared/README.md)
+- [API Reference](docs/api.md)
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Quick Start
-
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
+2. Create a feature branch
 3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Commit your changes: `git commit -m 'Add amazing feature'`
-7. Push to the branch: `git push origin feature/amazing-feature`
-8. Open a Pull Request
-
-### Development Guidelines
-
-- Follow [WordPress Coding Standards](https://developer.wordpress.org/coding-standards/)
-- Write tests for all new functionality
-- Update documentation for user-facing changes
-- Use conventional commit messages
-- Ensure security best practices
+4. Add tests
+5. Submit a pull request
 
 ## 📄 License
 
-This plugin is licensed under the [GPL v2 or later](LICENSE).
+GPL-2.0-or-later
 
 ## 🆘 Support
 
-### Getting Help
+- [GitHub Issues](https://github.com/g-abate/rate-compare/issues)
+- [Documentation](https://github.com/g-abate/rate-compare#readme)
 
-- **Documentation**: Check our [Wiki](https://github.com/g-abate/rate-compare/wiki)
-- **Issues**: Report bugs and request features on [GitHub Issues](https://github.com/g-abate/rate-compare/issues)
-- **Discussions**: Ask questions in [GitHub Discussions](https://github.com/g-abate/rate-compare/discussions)
-- **WordPress.org**: Visit our [plugin page](https://wordpress.org/plugins/rate-compare/) for user support
+## 🏷️ Version
 
-### Reporting Issues
-
-When reporting issues, please include:
-
-- WordPress version
-- PHP version
-- Plugin version
-- Steps to reproduce
-- Expected vs actual behavior
-- Screenshots if applicable
-
-### Security Issues
-
-For security vulnerabilities, please:
-
-1. **DO NOT** create a public issue
-2. Email security concerns to: security@ratecompare.com
-3. Include detailed reproduction steps
-4. Allow reasonable time for response
-
-## 📈 Roadmap
-
-### Version 1.0.0 (Current)
-- ✅ Multi-channel rate comparison
-- ✅ Admin interface
-- ✅ Caching system
-- ✅ Security features
-- ✅ REST API
-- ✅ Shortcode support
-
-### Version 1.1.0 (Planned)
-- 🔄 Additional booking channels
-- 🔄 Advanced filtering options
-- 🔄 Rate history tracking
-- 🔄 Export functionality
-
-### Version 1.2.0 (Planned)
-- 🔄 Machine learning rate predictions
-- 🔄 Advanced analytics
-- 🔄 Custom rate rules
-- 🔄 Integration with property management systems
-
-## 🏆 Credits
-
-- **Lead Developer**: [Your Name](https://github.com/your-username)
-- **Contributors**: [See all contributors](https://github.com/g-abate/rate-compare/graphs/contributors)
-- **WordPress Community**: For the amazing platform and ecosystem
-- **Open Source Libraries**: See [composer.json](composer.json) and [package.json](package.json)
-
-## 📊 Statistics
-
-- **Downloads**: [![WordPress Plugin Downloads](https://img.shields.io/wordpress/plugin/dt/rate-compare.svg)](https://wordpress.org/plugins/rate-compare/)
-- **Active Installs**: [![WordPress Plugin Active Installs](https://img.shields.io/wordpress/plugin/installs/rate-compare.svg)](https://wordpress.org/plugins/rate-compare/)
-- **Rating**: [![WordPress Plugin Rating](https://img.shields.io/wordpress/plugin/rating/rate-compare.svg)](https://wordpress.org/plugins/rate-compare/)
-- **Last Updated**: [![WordPress Plugin Last Updated](https://img.shields.io/wordpress/plugin/last-updated/rate-compare.svg)](https://wordpress.org/plugins/rate-compare/)
-
-## 🔗 Links
-
-- **Plugin Page**: [WordPress.org](https://wordpress.org/plugins/rate-compare/)
-- **GitHub Repository**: [github.com/g-abate/rate-compare](https://github.com/g-abate/rate-compare)
-- **Documentation**: [Wiki](https://github.com/g-abate/rate-compare/wiki)
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
-- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
+Current version: 1.0.0
 
 ---
 
-**Made with ❤️ for the WordPress community**
-# Test AI PR Review
-
-This is a test pull request to verify the AI PR review workflow is working correctly.
-
-## Changes Made
-- Added AI PR review workflow
-- Created AGENT.md with WordPress guidelines
-- Added setup script for API key configuration
-
-## Testing
-- [ ] AI review should trigger automatically
-- [ ] Review should focus on WordPress standards
-- [ ] Security and performance should be highlighted
-- [ ] Code quality feedback should be provided
+**Note**: This is a monorepo. Each package has its own `package.json` and can be developed independently while sharing common code through the `shared/` directory.

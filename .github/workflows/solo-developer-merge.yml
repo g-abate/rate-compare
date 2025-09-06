@@ -1,0 +1,84 @@
+name: Solo Developer Merge Helper
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to merge'
+        required: true
+        type: string
+      merge_method:
+        description: 'Merge method'
+        required: true
+        default: 'squash'
+        type: choice
+        options:
+          - squash
+          - merge
+          - rebase
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge-pr:
+    name: Merge PR
+    runs-on: ubuntu-latest
+    if: github.actor == 'g-abate'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check PR status
+        run: |
+          PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          echo "Checking PR #$PR_NUMBER status..."
+          
+          # Get PR details
+          gh pr view $PR_NUMBER --json state,mergeable,statusCheckRollup
+          
+          # Check if PR is mergeable
+          MERGEABLE=$(gh pr view $PR_NUMBER --json mergeable --jq '.mergeable')
+          if [ "$MERGEABLE" != "true" ]; then
+            echo "❌ PR is not mergeable"
+            exit 1
+          fi
+          
+          # Check if all status checks are passing
+          STATUS=$(gh pr view $PR_NUMBER --json statusCheckRollup --jq '.statusCheckRollup[].conclusion' | grep -v "SUCCESS" | head -1)
+          if [ -n "$STATUS" ]; then
+            echo "❌ Not all status checks are passing"
+            exit 1
+          fi
+          
+          echo "✅ PR is ready to merge"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge PR
+        run: |
+          PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          MERGE_METHOD="${{ github.event.inputs.merge_method }}"
+          
+          echo "Merging PR #$PR_NUMBER using $MERGE_METHOD method..."
+          
+          gh pr merge $PR_NUMBER --$MERGE_METHOD --delete-branch
+          
+          echo "✅ PR #$PR_NUMBER merged successfully!"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on merged PR
+        run: |
+          PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          gh pr comment $PR_NUMBER --body "🎉 **PR merged successfully!**
+          
+          - **Merged by**: @${{ github.actor }}
+          - **Method**: ${{ github.event.inputs.merge_method }}
+          - **Branch**: Deleted after merge
+          
+          Great work! 🚀"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
