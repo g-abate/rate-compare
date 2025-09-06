@@ -88,7 +88,13 @@ jobs:
         
         # Check shared library coverage
         if [ -f shared/coverage.json ]; then
-          SHARED_COVERAGE=$(node -p "JSON.parse(require('fs').readFileSync('shared/coverage.json', 'utf8')).summary.lines.pct")
+          # Try different coverage formats
+          SHARED_COVERAGE=$(node -p "
+            const coverage = JSON.parse(require('fs').readFileSync('shared/coverage.json', 'utf8'));
+            const summary = coverage.summary || coverage.total || coverage;
+            const lines = summary.lines || summary.statements || summary;
+            lines.pct || lines.percentage || 0
+          " 2>/dev/null || echo "0")
           echo "Shared library coverage: ${SHARED_COVERAGE}%"
           
           if (( $(echo "$SHARED_COVERAGE < 80" | bc -l) )); then
@@ -99,7 +105,13 @@ jobs:
         
         # Check universal snippet coverage
         if [ -f universal-snippet/coverage.json ]; then
-          UNIVERSAL_COVERAGE=$(node -p "JSON.parse(require('fs').readFileSync('universal-snippet/coverage.json', 'utf8')).summary.lines.pct")
+          # Try different coverage formats
+          UNIVERSAL_COVERAGE=$(node -p "
+            const coverage = JSON.parse(require('fs').readFileSync('universal-snippet/coverage.json', 'utf8'));
+            const summary = coverage.summary || coverage.total || coverage;
+            const lines = summary.lines || summary.statements || summary;
+            lines.pct || lines.percentage || 0
+          " 2>/dev/null || echo "0")
           echo "Universal snippet coverage: ${UNIVERSAL_COVERAGE}%"
           
           if (( $(echo "$UNIVERSAL_COVERAGE < 80" | bc -l) )); then

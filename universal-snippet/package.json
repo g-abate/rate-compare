@@ -2,6 +2,7 @@
   "name": "rate-compare-snippet",
   "version": "1.0.0",
   "description": "Universal JavaScript snippet for rate comparison on any website",
+  "type": "module",
   "main": "dist/rate-compare.umd.js",
   "module": "dist/rate-compare.esm.js",
   "types": "dist/rate-compare.d.ts",
@@ -40,6 +41,7 @@
     "prettier": "^3.6.2",
     "rollup": "^4.0.0",
     "rollup-plugin-dts": "^6.0.0",
+    "tslib": "^2.6.0",
     "typescript": "^5.0.0",
     "vitest": "^2.0.0"
   },
