@@ -1,10 +1,11 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
-import { terser } from '@rollup/plugin-terser';
+import terser from '@rollup/plugin-terser';
 import dts from 'rollup-plugin-dts';
+import { readFileSync } from 'fs';
 
-const packageJson = require('./package.json');
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'));
 
 export default [
   // Main build

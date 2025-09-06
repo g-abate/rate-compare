@@ -88,7 +88,7 @@ jobs:
         
         # Check shared library coverage
         if [ -f shared/coverage.json ]; then
-          SHARED_COVERAGE=$(node -p "JSON.parse(require('fs').readFileSync('shared/coverage.json', 'utf8')).total.lines.pct")
+          SHARED_COVERAGE=$(node -p "JSON.parse(require('fs').readFileSync('shared/coverage.json', 'utf8')).summary.lines.pct")
           echo "Shared library coverage: ${SHARED_COVERAGE}%"
           
           if (( $(echo "$SHARED_COVERAGE < 80" | bc -l) )); then
@@ -99,7 +99,7 @@ jobs:
         
         # Check universal snippet coverage
         if [ -f universal-snippet/coverage.json ]; then
-          UNIVERSAL_COVERAGE=$(node -p "JSON.parse(require('fs').readFileSync('universal-snippet/coverage.json', 'utf8')).total.lines.pct")
+          UNIVERSAL_COVERAGE=$(node -p "JSON.parse(require('fs').readFileSync('universal-snippet/coverage.json', 'utf8')).summary.lines.pct")
           echo "Universal snippet coverage: ${UNIVERSAL_COVERAGE}%"
           
           if (( $(echo "$UNIVERSAL_COVERAGE < 80" | bc -l) )); then

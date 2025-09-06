@@ -55,10 +55,12 @@ export interface RateComparisonResult {
 /**
  * Validate rate data
  */
-export function validateRateData(data: any): data is RateData {
+export function validateRateData(data: unknown): data is RateData {
   if (!data || typeof data !== 'object') {
     return false;
   }
+
+  const dataObj = data as Record<string, unknown>;
 
   const requiredFields = [
     'channel',
@@ -74,59 +76,60 @@ export function validateRateData(data: any): data is RateData {
   ];
 
   for (const field of requiredFields) {
-    if (!(field in data)) {
+    if (!(field in dataObj)) {
       return false;
     }
   }
 
   // Validate channel
-  if (!['airbnb', 'vrbo', 'booking', 'expedia'].includes(data.channel)) {
+  if (!['airbnb', 'vrbo', 'booking', 'expedia'].includes(dataObj.channel as string)) {
     return false;
   }
 
   // Validate property ID
-  if (typeof data.propertyId !== 'string' || data.propertyId.trim() === '') {
+  if (typeof dataObj.propertyId !== 'string' || dataObj.propertyId.trim() === '') {
     return false;
   }
 
   // Validate dates
-  if (!isValidISODate(data.checkIn) || !isValidISODate(data.checkOut)) {
+  if (!isValidISODate(dataObj.checkIn as string) || !isValidISODate(dataObj.checkOut as string)) {
     return false;
   }
 
   // Validate prices
-  if (typeof data.basePrice !== 'number' || data.basePrice < 0) {
+  if (typeof dataObj.basePrice !== 'number' || dataObj.basePrice < 0) {
     return false;
   }
 
-  if (typeof data.totalPrice !== 'number' || data.totalPrice < 0) {
+  if (typeof dataObj.totalPrice !== 'number' || dataObj.totalPrice < 0) {
     return false;
   }
 
   // Validate fees
-  if (!data.fees || typeof data.fees !== 'object') {
+  if (!dataObj.fees || typeof dataObj.fees !== 'object') {
     return false;
   }
 
+  const feesObj = dataObj.fees as Record<string, unknown>;
   const feeFields = ['cleaning', 'service', 'taxes', 'other'];
   for (const field of feeFields) {
-    if (typeof data.fees[field] !== 'number' || data.fees[field] < 0) {
+    if (typeof feesObj[field] !== 'number' || feesObj[field] < 0) {
       return false;
     }
   }
 
   // Validate currency
-  if (typeof data.currency !== 'string' || data.currency.length !== 3) {
+  if (typeof dataObj.currency !== 'string' || dataObj.currency.length !== 3) {
     return false;
   }
 
   // Validate availability
-  if (typeof data.availability !== 'boolean') {
+  if (typeof dataObj.availability !== 'boolean') {
     return false;
   }
 
   // Validate last updated
-  if (!isValidISODate(data.lastUpdated)) {
+  if (!isValidISODate(dataObj.lastUpdated as string)) {
     return false;
   }
 
@@ -136,35 +139,38 @@ export function validateRateData(data: any): data is RateData {
 /**
  * Validate property configuration
  */
-export function validatePropertyConfig(config: any): config is PropertyConfig {
+export function validatePropertyConfig(config: unknown): config is PropertyConfig {
   if (!config || typeof config !== 'object') {
     return false;
   }
 
+  const configObj = config as Record<string, unknown>;
+
   const requiredFields = ['id', 'name', 'channels', 'settings'];
   for (const field of requiredFields) {
-    if (!(field in config)) {
+    if (!(field in configObj)) {
       return false;
     }
   }
 
   // Validate ID
-  if (typeof config.id !== 'string' || config.id.trim() === '') {
+  if (typeof configObj.id !== 'string' || configObj.id.trim() === '') {
     return false;
   }
 
   // Validate name
-  if (typeof config.name !== 'string' || config.name.trim() === '') {
+  if (typeof configObj.name !== 'string' || configObj.name.trim() === '') {
     return false;
   }
 
   // Validate channels
-  if (!config.channels || typeof config.channels !== 'object') {
+  if (!configObj.channels || typeof configObj.channels !== 'object') {
     return false;
   }
 
+  const channelsObj = configObj.channels as Record<string, unknown>;
   const validChannels = ['airbnb', 'vrbo', 'booking', 'expedia'];
-  for (const [key, value] of Object.entries(config.channels)) {
+  for (const [key, value] of Object.entries(channelsObj)) {
     if (!validChannels.includes(key)) {
       return false;
     }
@@ -174,19 +180,20 @@ export function validatePropertyConfig(config: any): config is PropertyConfig {
   }
 
   // Validate settings
-  if (!config.settings || typeof config.settings !== 'object') {
+  if (!configObj.settings || typeof configObj.settings !== 'object') {
     return false;
   }
 
-  if (!['inline', 'floating'].includes(config.settings.displayMode)) {
+  const settingsObj = configObj.settings as Record<string, unknown>;
+  if (!['inline', 'floating'].includes(settingsObj.displayMode as string)) {
     return false;
   }
 
-  if (!['light', 'dark'].includes(config.settings.theme)) {
+  if (!['light', 'dark'].includes(settingsObj.theme as string)) {
     return false;
   }
 
-  if (typeof config.settings.locale !== 'string' || config.settings.locale.trim() === '') {
+  if (typeof settingsObj.locale !== 'string' || settingsObj.locale.trim() === '') {
     return false;
   }
 

@@ -2,6 +2,7 @@
   "name": "@rate-compare/shared",
   "version": "1.0.0",
   "description": "Shared core logic for rate comparison system",
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",

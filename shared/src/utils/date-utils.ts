@@ -22,6 +22,7 @@ export function formatDate(date: string | Date, formatString: string = 'MMM dd, 
   } catch (error) {
     // Log error in development, return fallback in production
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.error('Error formatting date:', error);
     }
     return 'Invalid Date';
@@ -45,6 +46,7 @@ export function calculateNights(checkIn: string | Date, checkOut: string | Date)
   } catch (error) {
     // Log error in development, return fallback in production
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.error('Error calculating nights:', error);
     }
     return 0;
@@ -73,6 +75,7 @@ export function isPastDate(date: string | Date): boolean {
   } catch (error) {
     // Log error in development, return fallback in production
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.error('Error checking if date is past:', error);
     }
     return true;
@@ -101,6 +104,7 @@ export function isToday(date: string | Date): boolean {
   } catch (error) {
     // Log error in development, return fallback in production
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.error('Error checking if date is today:', error);
     }
     return false;
@@ -136,6 +140,7 @@ export function getDateRange(startDate: string | Date, endDate: string | Date): 
   } catch (error) {
     // Log error in development, return fallback in production
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.error('Error getting date range:', error);
     }
     return [];
@@ -177,6 +182,7 @@ export function addDaysToDate(date: string | Date, days: number): string {
   } catch (error) {
     // Log error in development, return fallback in production
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.error('Error adding days to date:', error);
     }
     return getCurrentISODate();
@@ -198,6 +204,7 @@ export function formatDateForAPI(date: string | Date): string {
   } catch (error) {
     // Log error in development, return fallback in production
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.error('Error formatting date for API:', error);
     }
     return format(new Date(), 'yyyy-MM-dd');
@@ -214,6 +221,7 @@ export function parseDateFromAPI(dateString: string): Date | null {
   } catch (error) {
     // Log error in development, return fallback in production
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.error('Error parsing date from API:', error);
     }
     return null;

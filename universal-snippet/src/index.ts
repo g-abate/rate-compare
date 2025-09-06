@@ -7,5 +7,6 @@
 
 // Placeholder for the main entry point
 export function initRateComparison(): void {
+  // eslint-disable-next-line no-console
   console.log('Rate comparison initialized');
 }
