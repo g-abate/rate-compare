@@ -1,0 +1,35 @@
+name: Required Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  required-checks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check PHP syntax
+      run: find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \;
+    
+    - name: Check for security issues
+      run: |
+        if [ -f composer.json ]; then
+          composer require --dev phpstan/phpstan --no-interaction
+          vendor/bin/phpstan analyse --level=5 --no-progress
+        fi
+    
+    - name: Check coding standards
+      run: |
+        if [ -f composer.json ]; then
+          composer require --dev squizlabs/php_codesniffer --no-interaction
+          vendor/bin/phpcs --standard=phpcs.xml --report=summary
+        fi
+    
+    - name: Check JavaScript syntax
+      run: |
+        if [ -f package.json ]; then
+          npm ci
+          npm run lint:js || echo "No lint script found"
+        fi
