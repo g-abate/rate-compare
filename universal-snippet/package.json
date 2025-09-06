@@ -1,0 +1,115 @@
+{
+  "name": "rate-compare-snippet",
+  "version": "1.0.0",
+  "description": "Universal JavaScript snippet for rate comparison on any website",
+  "type": "module",
+  "main": "dist/rate-compare.umd.js",
+  "module": "dist/rate-compare.esm.js",
+  "types": "dist/rate-compare.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "size": "echo 'Bundle size check not implemented yet'"
+  },
+  "dependencies": {
+    "@rate-compare/shared": "file:../shared"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-terser": "^0.4.0",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.6.2",
+    "rollup": "^4.0.0",
+    "rollup-plugin-dts": "^6.0.0",
+    "tslib": "^2.6.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "browser": true,
+      "es2020": true,
+      "node": true
+    },
+    "extends": [
+      "eslint:recommended",
+      "prettier"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "ecmaVersion": 2020,
+      "sourceType": "module"
+    },
+    "plugins": ["@typescript-eslint", "prettier"],
+    "rules": {
+      "prettier/prettier": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      "@typescript-eslint/no-non-null-assertion": "warn",
+      "no-console": "warn",
+      "no-debugger": "error"
+    },
+    "overrides": [
+      {
+        "files": ["**/*.test.{js,ts}", "**/*.spec.{js,ts}"],
+        "env": {
+          "jest": true
+        },
+        "rules": {
+          "@typescript-eslint/no-explicit-any": "off",
+          "no-console": "off"
+        }
+      }
+    ],
+    "ignorePatterns": [
+      "node_modules/",
+      "dist/",
+      "build/",
+      "coverage/",
+      "*.min.js"
+    ]
+  },
+  "keywords": [
+    "rate-comparison",
+    "javascript-snippet",
+    "universal",
+    "airbnb",
+    "vrbo",
+    "booking.com"
+  ],
+  "author": "Gideon Abate",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/g-abate/rate-compare.git",
+    "directory": "universal-snippet"
+  },
+  "bugs": {
+    "url": "https://github.com/g-abate/rate-compare/issues"
+  },
+  "homepage": "https://github.com/g-abate/rate-compare#readme"
+}

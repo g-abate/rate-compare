@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# Pre-commit hook for TDD enforcement
+# This hook ensures that tests are written before code changes
+
+echo "🔍 Running pre-commit TDD checks..."
+
+# Get the list of staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+# Check for test files
+TEST_FILES=$(echo "$STAGED_FILES" | grep -E "\.(test|spec)\.(js|ts|php)$" || true)
+SOURCE_FILES=$(echo "$STAGED_FILES" | grep -E "\.(js|ts|php)$" | grep -v -E "\.(test|spec)\.(js|ts|php)$" || true)
+
+if [ -z "$SOURCE_FILES" ]; then
+  echo "ℹ️ No source files staged - skipping TDD validation"
+  exit 0
+fi
+
+if [ -z "$TEST_FILES" ]; then
+  echo "❌ TDD Violation: No test files found for staged source files"
+  echo "Staged source files: $SOURCE_FILES"
+  echo ""
+  echo "Please write tests first following TDD principles:"
+  echo "1. Write a failing test (Red phase)"
+  echo "2. Write minimal code to make it pass (Green phase)"
+  echo "3. Refactor while keeping tests green (Refactor phase)"
+  echo ""
+  echo "To bypass this check (not recommended), use: git commit --no-verify"
+  exit 1
+fi
+
+echo "✅ TDD Process: Test files found for source changes"
+echo "Test files: $TEST_FILES"
+echo "Source files: $SOURCE_FILES"
+
+# Run tests to ensure they pass
+echo "🧪 Running tests..."
+
+# Check if we're in a workspace directory
+if [ -f "package.json" ]; then
+  echo "Running shared library tests..."
+  cd shared && npm test -- --run
+  if [ $? -ne 0 ]; then
+    echo "❌ Tests failed in shared library"
+    exit 1
+  fi
+  cd ..
+  
+  echo "Running universal snippet tests..."
+  cd universal-snippet && npm test -- --run
+  if [ $? -ne 0 ]; then
+    echo "❌ Tests failed in universal snippet"
+    exit 1
+  fi
+  cd ..
+fi
+
+# Check WordPress plugin tests
+if [ -f "wordpress-plugin/composer.json" ]; then
+  if command -v composer &> /dev/null; then
+    echo "Running WordPress plugin tests..."
+    cd wordpress-plugin && composer test
+    if [ $? -ne 0 ]; then
+      echo "❌ Tests failed in WordPress plugin"
+      exit 1
+    fi
+    cd ..
+  else
+    echo "⚠️ Composer not found - skipping WordPress plugin tests"
+    echo "Install composer to run WordPress plugin tests locally"
+  fi
+fi
+
+echo "✅ All tests passed! Ready to commit."
+exit 0

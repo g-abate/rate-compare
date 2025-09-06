@@ -1,0 +1,483 @@
+---
+description: "Plugin release management and upgrade procedures"
+globs: ["**/*.php", "**/uninstall.php"]
+alwaysApply: false
+---
+
+# Release & Upgrades
+
+## Plugin Activation/Deactivation
+
+### Safe Activation
+```php
+// plugin-slug.php - Activation hook
+register_activation_hook( __FILE__, 'plugin_slug_activate' );
+function plugin_slug_activate(): void {
+    // Check WordPress version
+    if ( version_compare( get_bloginfo( 'version' ), '5.0', '<' ) ) {
+        deactivate_plugins( plugin_basename( __FILE__ ) );
+        wp_die( __( 'This plugin requires WordPress 5.0 or higher.', 'plugin-slug' ) );
+    }
+    
+    // Check PHP version
+    if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
+        deactivate_plugins( plugin_basename( __FILE__ ) );
+        wp_die( __( 'This plugin requires PHP 7.4 or higher.', 'plugin-slug' ) );
+    }
+    
+    // Create database tables
+    plugin_slug_create_tables();
+    
+    // Set default options
+    plugin_slug_set_default_options();
+    
+    // Schedule cron events
+    plugin_slug_schedule_cron_events();
+    
+    // Set activation flag
+    set_transient( 'plugin_slug_activated', true, 60 );
+}
+
+// Create database tables
+function plugin_slug_create_tables(): void {
+    global $wpdb;
+    
+    $charset_collate = $wpdb->get_charset_collate();
+    
+    $table_name = $wpdb->prefix . 'plugin_slug_rates';
+    $sql = "CREATE TABLE $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        provider_id bigint(20) NOT NULL,
+        rate_type varchar(50) NOT NULL,
+        rate_value decimal(10,4) NOT NULL,
+        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+        updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY provider_id (provider_id),
+        KEY rate_type (rate_type)
+    ) $charset_collate;";
+    
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    dbDelta( $sql );
+}
+
+// Set default options
+function plugin_slug_set_default_options(): void {
+    $default_options = [
+        'plugin_slug_version' => PLUGIN_SLUG_VERSION,
+        'plugin_slug_settings' => [
+            'default_rate_type' => 'mortgage',
+            'display_limit' => 10,
+            'cache_duration' => 3600,
+        ],
+    ];
+    
+    foreach ( $default_options as $option_name => $value ) {
+        if ( ! get_option( $option_name ) ) {
+            add_option( $option_name, $value );
+        }
+    }
+}
+```
+
+### Safe Deactivation
+```php
+// plugin-slug.php - Deactivation hook
+register_deactivation_hook( __FILE__, 'plugin_slug_deactivate' );
+function plugin_slug_deactivate(): void {
+    // Clear scheduled cron events
+    plugin_slug_clear_cron_events();
+    
+    // Clear transients
+    plugin_slug_clear_transients();
+    
+    // Flush rewrite rules
+    flush_rewrite_rules();
+    
+    // Log deactivation
+    error_log( 'Plugin Slug: Plugin deactivated' );
+}
+
+// Clear cron events
+function plugin_slug_clear_cron_events(): void {
+    $cron_events = [
+        'plugin_slug_update_rates',
+        'plugin_slug_cleanup_old_data',
+        'plugin_slug_send_notifications',
+    ];
+    
+    foreach ( $cron_events as $event ) {
+        wp_clear_scheduled_hook( $event );
+    }
+}
+```
+
+## Version Management
+
+### Version Checking and Upgrades
+```php
+// plugin-slug.php - Version upgrade system
+add_action( 'admin_init', 'plugin_slug_check_upgrade' );
+function plugin_slug_check_upgrade(): void {
+    $current_version = get_option( 'plugin_slug_version', '0.0.0' );
+    $plugin_version = PLUGIN_SLUG_VERSION;
+    
+    if ( version_compare( $current_version, $plugin_version, '<' ) ) {
+        plugin_slug_upgrade( $current_version, $plugin_version );
+        update_option( 'plugin_slug_version', $plugin_version );
+    }
+}
+
+// Upgrade system
+function plugin_slug_upgrade( string $from_version, string $to_version ): void {
+    // Only run upgrades for admin users
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+    
+    // Log upgrade start
+    error_log( "Plugin Slug: Upgrading from {$from_version} to {$to_version}" );
+    
+    // Run version-specific upgrades
+    if ( version_compare( $from_version, '1.0.0', '<' ) ) {
+        plugin_slug_upgrade_to_1_0_0();
+    }
+    
+    if ( version_compare( $from_version, '1.1.0', '<' ) ) {
+        plugin_slug_upgrade_to_1_1_0();
+    }
+    
+    if ( version_compare( $from_version, '1.2.0', '<' ) ) {
+        plugin_slug_upgrade_to_1_2_0();
+    }
+    
+    // Clear caches after upgrade
+    plugin_slug_clear_all_caches();
+    
+    // Log upgrade completion
+    error_log( "Plugin Slug: Upgrade completed to {$to_version}" );
+}
+```
+
+### Version-Specific Upgrades
+```php
+// Upgrade to version 1.0.0
+function plugin_slug_upgrade_to_1_0_0(): void {
+    // Create new database tables
+    plugin_slug_create_tables();
+    
+    // Migrate existing data
+    plugin_slug_migrate_legacy_data();
+    
+    // Set new default options
+    $new_options = [
+        'plugin_slug_api_key' => '',
+        'plugin_slug_cache_duration' => 3600,
+    ];
+    
+    foreach ( $new_options as $option => $value ) {
+        if ( ! get_option( $option ) ) {
+            add_option( $option, $value );
+        }
+    }
+}
+
+// Upgrade to version 1.1.0
+function plugin_slug_upgrade_to_1_1_0(): void {
+    // Add new columns to existing table
+    global $wpdb;
+    
+    $table_name = $wpdb->prefix . 'plugin_slug_rates';
+    $wpdb->query( "ALTER TABLE $table_name ADD COLUMN rate_source varchar(100) DEFAULT 'manual'" );
+    $wpdb->query( "ALTER TABLE $table_name ADD COLUMN is_featured tinyint(1) DEFAULT 0" );
+    
+    // Update existing records
+    $wpdb->update(
+        $table_name,
+        [ 'rate_source' => 'manual' ],
+        [ 'rate_source' => '' ]
+    );
+}
+
+// Upgrade to version 1.2.0
+function plugin_slug_upgrade_to_1_2_0(): void {
+    // Create new table for rate history
+    global $wpdb;
+    
+    $charset_collate = $wpdb->get_charset_collate();
+    $table_name = $wpdb->prefix . 'plugin_slug_rate_history';
+    
+    $sql = "CREATE TABLE $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        rate_id bigint(20) NOT NULL,
+        old_value decimal(10,4) NOT NULL,
+        new_value decimal(10,4) NOT NULL,
+        changed_at datetime DEFAULT CURRENT_TIMESTAMP,
+        changed_by bigint(20) NOT NULL,
+        PRIMARY KEY (id),
+        KEY rate_id (rate_id),
+        KEY changed_at (changed_at)
+    ) $charset_collate;";
+    
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    dbDelta( $sql );
+}
+```
+
+## Data Migration
+
+### Safe Data Migration
+```php
+// Migrate legacy data
+function plugin_slug_migrate_legacy_data(): void {
+    global $wpdb;
+    
+    // Check if migration is needed
+    $migrated = get_option( 'plugin_slug_data_migrated', false );
+    if ( $migrated ) {
+        return;
+    }
+    
+    // Migrate from old table structure
+    $old_table = $wpdb->prefix . 'old_plugin_rates';
+    $new_table = $wpdb->prefix . 'plugin_slug_rates';
+    
+    if ( $wpdb->get_var( "SHOW TABLES LIKE '$old_table'" ) ) {
+        $old_data = $wpdb->get_results( "SELECT * FROM $old_table", ARRAY_A );
+        
+        foreach ( $old_data as $row ) {
+            $wpdb->insert( $new_table, [
+                'provider_id' => $row['bank_id'],
+                'rate_type' => 'mortgage',
+                'rate_value' => $row['interest_rate'],
+                'created_at' => $row['date_added'],
+            ] );
+        }
+        
+        // Mark migration as complete
+        update_option( 'plugin_slug_data_migrated', true );
+    }
+}
+```
+
+### Rollback Capability
+```php
+// Rollback system
+function plugin_slug_rollback( string $to_version ): void {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( __( 'Insufficient permissions', 'plugin-slug' ) );
+    }
+    
+    // Create backup before rollback
+    plugin_slug_create_backup();
+    
+    // Run rollback procedures
+    if ( version_compare( $to_version, '1.1.0', '<' ) ) {
+        plugin_slug_rollback_from_1_1_0();
+    }
+    
+    // Update version
+    update_option( 'plugin_slug_version', $to_version );
+    
+    // Clear caches
+    plugin_slug_clear_all_caches();
+}
+
+// Create backup before rollback
+function plugin_slug_create_backup(): void {
+    global $wpdb;
+    
+    $backup_data = [
+        'rates' => $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}plugin_slug_rates", ARRAY_A ),
+        'settings' => get_option( 'plugin_slug_settings', [] ),
+        'version' => get_option( 'plugin_slug_version', '0.0.0' ),
+    ];
+    
+    update_option( 'plugin_slug_backup_' . time(), $backup_data );
+}
+```
+
+## Uninstall Process
+
+### Clean Uninstall
+```php
+// uninstall.php - Clean uninstall
+<?php
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+    exit;
+}
+
+// Only run if user has permission
+if ( ! current_user_can( 'delete_plugins' ) ) {
+    return;
+}
+
+// Remove all plugin data
+plugin_slug_remove_all_data();
+
+function plugin_slug_remove_all_data(): void {
+    global $wpdb;
+    
+    // Remove database tables
+    $tables = [
+        $wpdb->prefix . 'plugin_slug_rates',
+        $wpdb->prefix . 'plugin_slug_rate_history',
+        $wpdb->prefix . 'plugin_slug_providers',
+    ];
+    
+    foreach ( $tables as $table ) {
+        $wpdb->query( "DROP TABLE IF EXISTS $table" );
+    }
+    
+    // Remove options
+    $options = [
+        'plugin_slug_version',
+        'plugin_slug_settings',
+        'plugin_slug_api_key',
+        'plugin_slug_cache_duration',
+    ];
+    
+    foreach ( $options as $option ) {
+        delete_option( $option );
+    }
+    
+    // Remove transients
+    $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_plugin_slug_%'" );
+    $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_plugin_slug_%'" );
+    
+    // Remove cron events
+    wp_clear_scheduled_hook( 'plugin_slug_update_rates' );
+    wp_clear_scheduled_hook( 'plugin_slug_cleanup_old_data' );
+    
+    // Remove user meta
+    $wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE 'plugin_slug_%'" );
+    
+    // Remove post meta
+    $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE 'plugin_slug_%'" );
+}
+```
+
+## Release Process
+
+### Pre-Release Checklist
+```php
+// Release validation
+function plugin_slug_validate_release(): array {
+    $errors = [];
+    
+    // Check WordPress compatibility
+    if ( version_compare( get_bloginfo( 'version' ), '5.0', '<' ) ) {
+        $errors[] = 'WordPress version too low';
+    }
+    
+    // Check PHP compatibility
+    if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
+        $errors[] = 'PHP version too low';
+    }
+    
+    // Check database tables
+    if ( ! plugin_slug_tables_exist() ) {
+        $errors[] = 'Database tables missing';
+    }
+    
+    // Check required options
+    $required_options = [ 'plugin_slug_version', 'plugin_slug_settings' ];
+    foreach ( $required_options as $option ) {
+        if ( ! get_option( $option ) ) {
+            $errors[] = "Required option missing: $option";
+        }
+    }
+    
+    return $errors;
+}
+```
+
+### Release Notes Generation
+```php
+// Generate release notes
+function plugin_slug_generate_release_notes( string $version ): string {
+    $changelog = get_option( 'plugin_slug_changelog', [] );
+    $release_notes = [];
+    
+    if ( isset( $changelog[ $version ] ) ) {
+        $release = $changelog[ $version ];
+        
+        if ( ! empty( $release['added'] ) ) {
+            $release_notes[] = "### Added\n" . implode( "\n", array_map( fn( $item ) => "- $item", $release['added'] ) );
+        }
+        
+        if ( ! empty( $release['changed'] ) ) {
+            $release_notes[] = "### Changed\n" . implode( "\n", array_map( fn( $item ) => "- $item", $release['changed'] ) );
+        }
+        
+        if ( ! empty( $release['fixed'] ) ) {
+            $release_notes[] = "### Fixed\n" . implode( "\n", array_map( fn( $item ) => "- $item", $release['fixed'] ) );
+        }
+        
+        if ( ! empty( $release['security'] ) ) {
+            $release_notes[] = "### Security\n" . implode( "\n", array_map( fn( $item ) => "- $item", $release['security'] ) );
+        }
+    }
+    
+    return implode( "\n\n", $release_notes );
+}
+```
+
+## Error Handling and Logging
+
+### Upgrade Error Handling
+```php
+// Safe upgrade with error handling
+function plugin_slug_safe_upgrade( string $from_version, string $to_version ): bool {
+    try {
+        // Create backup before upgrade
+        plugin_slug_create_backup();
+        
+        // Run upgrade
+        plugin_slug_upgrade( $from_version, $to_version );
+        
+        // Validate upgrade
+        if ( ! plugin_slug_validate_upgrade() ) {
+            throw new Exception( 'Upgrade validation failed' );
+        }
+        
+        return true;
+        
+    } catch ( Exception $e ) {
+        error_log( "Plugin Slug upgrade failed: " . $e->getMessage() );
+        
+        // Attempt rollback
+        plugin_slug_rollback( $from_version );
+        
+        // Notify admin
+        plugin_slug_notify_upgrade_failure( $e->getMessage() );
+        
+        return false;
+    }
+}
+```
+
+### Upgrade Logging
+```php
+// Log upgrade activities
+function plugin_slug_log_upgrade( string $action, string $details ): void {
+    $log_entry = [
+        'timestamp' => current_time( 'mysql' ),
+        'action' => $action,
+        'details' => $details,
+        'user_id' => get_current_user_id(),
+        'version_from' => get_option( 'plugin_slug_version', '0.0.0' ),
+        'version_to' => PLUGIN_SLUG_VERSION,
+    ];
+    
+    $log = get_option( 'plugin_slug_upgrade_log', [] );
+    $log[] = $log_entry;
+    
+    // Keep only last 50 entries
+    if ( count( $log ) > 50 ) {
+        $log = array_slice( $log, -50 );
+    }
+    
+    update_option( 'plugin_slug_upgrade_log', $log );
+}
+```

@@ -1,0 +1,401 @@
+---
+description: "Internationalization and documentation requirements"
+globs: ["**/*.php", "**/readme.txt", "**/README.md", "**/languages/**"]
+alwaysApply: false
+---
+
+# Internationalization & Documentation
+
+## String Translation
+
+### PHP String Wrapping
+```php
+// Good: Proper string wrapping for different contexts
+function plugin_slug_display_message( string $type, string $message ): void {
+    $translated_message = '';
+    
+    switch ( $type ) {
+        case 'success':
+            $translated_message = sprintf(
+                __( 'Success: %s', 'plugin-slug' ),
+                $message
+            );
+            break;
+            
+        case 'error':
+            $translated_message = sprintf(
+                __( 'Error: %s', 'plugin-slug' ),
+                $message
+            );
+            break;
+            
+        default:
+            $translated_message = esc_html( $message );
+    }
+    
+    echo '<div class="notice notice-' . esc_attr( $type ) . '">';
+    echo '<p>' . $translated_message . '</p>';
+    echo '</div>';
+}
+
+// Good: Context-aware translations
+function plugin_slug_get_user_role_label( string $role ): string {
+    $labels = [
+        'admin'     => _x( 'Administrator', 'User role', 'plugin-slug' ),
+        'editor'    => _x( 'Editor', 'User role', 'plugin-slug' ),
+        'author'    => _x( 'Author', 'User role', 'plugin-slug' ),
+        'subscriber' => _x( 'Subscriber', 'User role', 'plugin-slug' ),
+    ];
+    
+    return $labels[ $role ] ?? $role;
+}
+```
+
+### JavaScript String Translation
+```javascript
+// Good: Localized strings in JavaScript
+const PluginSlugStrings = {
+    confirmDelete: pluginSlugAdmin.strings.confirmDelete,
+    saving: pluginSlugAdmin.strings.saving,
+    saved: pluginSlugAdmin.strings.saved,
+    error: pluginSlugAdmin.strings.error || 'An error occurred'
+};
+
+// Good: Dynamic string translation
+function translateString(key, context = '') {
+    if (context) {
+        return wp.i18n.sprintf(
+            wp.i18n.__('Context: %s', 'plugin-slug'),
+            wp.i18n.__(key, 'plugin-slug')
+        );
+    }
+    return wp.i18n.__(key, 'plugin-slug');
+}
+```
+
+### Escaping with Translation
+```php
+// Good: Escaping with translation functions
+function plugin_slug_display_title( string $title ): void {
+    // For HTML output
+    echo '<h1>' . esc_html( __( 'Title: %s', 'plugin-slug' ) ) . '</h1>';
+    
+    // For HTML attributes
+    echo '<input type="text" placeholder="' . esc_attr( __( 'Enter title here', 'plugin-slug' ) ) . '">';
+    
+    // For URLs
+    echo '<a href="' . esc_url( admin_url( 'admin.php?page=plugin-slug' ) ) . '">';
+    echo esc_html( __( 'Go to Settings', 'plugin-slug' ) );
+    echo '</a>';
+    
+    // For allowed HTML content
+    echo wp_kses_post( __( 'Visit our <a href="%s">website</a> for more info.', 'plugin-slug' ) );
+}
+
+// Bad: Unescaped translated strings
+function bad_display( $title ) {
+    echo '<h1>' . __( 'Title: ' . $title, 'plugin-slug' ); // XSS vulnerability
+}
+```
+
+## Text Domain Loading
+
+### Proper Text Domain Initialization
+```php
+// Good: Load text domain on init
+add_action( 'init', 'plugin_slug_load_textdomain' );
+function plugin_slug_load_textdomain(): void {
+    load_plugin_textdomain(
+        'plugin-slug',
+        false,
+        dirname( plugin_basename( PLUGIN_SLUG_PLUGIN_FILE ) ) . '/languages'
+    );
+}
+
+// Good: Load text domain for admin
+add_action( 'admin_init', 'plugin_slug_load_admin_textdomain' );
+function plugin_slug_load_admin_textdomain(): void {
+    if ( is_admin() ) {
+        load_plugin_textdomain(
+            'plugin-slug',
+            false,
+            dirname( plugin_basename( PLUGIN_SLUG_PLUGIN_FILE ) ) . '/languages'
+        );
+    }
+}
+```
+
+### JavaScript Text Domain
+```php
+// Good: Pass translated strings to JavaScript
+function plugin_slug_localize_script(): void {
+    wp_localize_script( 'plugin-slug-admin', 'pluginSlugAdmin', [
+        'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+        'nonce'   => wp_create_nonce( 'plugin_slug_ajax' ),
+        'strings' => [
+            'confirmDelete' => __( 'Are you sure you want to delete this item?', 'plugin-slug' ),
+            'saving'       => __( 'Saving...', 'plugin-slug' ),
+            'saved'        => __( 'Saved successfully!', 'plugin-slug' ),
+            'error'        => __( 'An error occurred. Please try again.', 'plugin-slug' ),
+        ],
+    ] );
+}
+```
+
+## README Documentation
+
+### readme.txt (WordPress.org)
+```txt
+=== Plugin Name ===
+Contributors: yourname
+Tags: rates, comparison, financial, tools
+Requires at least: 5.0
+Tested up to: 6.4
+Stable tag: 1.0.0
+Requires PHP: 7.4
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+Compare rates and find the best deals with this powerful WordPress plugin.
+
+== Description ==
+
+Plugin Name is a comprehensive rate comparison tool that helps users find the best rates for various services. Whether you're comparing interest rates, insurance rates, or any other type of pricing, this plugin provides an intuitive interface and powerful filtering options.
+
+= Key Features =
+
+* **Easy Setup**: Get started in minutes with our simple configuration wizard
+* **Multiple Rate Types**: Support for various rate comparison scenarios
+* **Advanced Filtering**: Filter results by multiple criteria
+* **Responsive Design**: Works perfectly on all devices
+* **Customizable Display**: Match your site's design with custom styling options
+* **REST API**: Full REST API support for developers
+* **Multilingual Ready**: Translation ready with WPML/Polylang support
+
+= Developer Features =
+
+* **Hooks & Filters**: Extensive customization options for developers
+* **REST API Endpoints**: `/wp-json/plugin-slug/v1/`
+* **Custom Post Types**: `plugin_slug_rate` and `plugin_slug_provider`
+* **Custom Fields**: Flexible data structure for rate information
+* **Shortcodes**: `[plugin_slug_display]` and `[plugin_slug_comparison]`
+
+== Installation ==
+
+1. Upload the plugin files to the `/wp-content/plugins/plugin-slug` directory, or install the plugin through the WordPress plugins screen directly.
+2. Activate the plugin through the 'Plugins' screen in WordPress
+3. Use the Settings->Plugin Name screen to configure the plugin
+4. Add the shortcode `[plugin_slug_display]` to any post or page where you want to display rate comparisons
+
+== Frequently Asked Questions ==
+
+= How do I add new rate providers? =
+
+You can add new rate providers through the admin interface at Settings > Plugin Name > Providers, or programmatically using the `plugin_slug_add_provider` function.
+
+= Can I customize the display? =
+
+Yes! The plugin includes several filters and hooks for customization. You can also override the default templates by copying them to your theme directory.
+
+= Is this plugin translation ready? =
+
+Yes, the plugin is fully translation ready and includes a .pot file for translators.
+
+== Screenshots ==
+
+1. Main settings page with configuration options
+2. Rate comparison display on frontend
+3. Provider management interface
+4. Mobile responsive design
+
+== Changelog ==
+
+= 1.0.0 =
+* Initial release
+* Basic rate comparison functionality
+* Admin settings interface
+* REST API endpoints
+* Translation ready
+
+== Upgrade Notice ==
+
+= 1.0.0 =
+Initial release of Plugin Name. No upgrade needed.
+```
+
+### README.md (GitHub)
+```markdown
+# Plugin Name
+
+A powerful WordPress plugin for rate comparison and financial tools.
+
+## Features
+
+- 🔍 **Advanced Rate Comparison**: Compare rates from multiple providers
+- 📱 **Responsive Design**: Works perfectly on all devices
+- 🎨 **Customizable**: Match your site's design with custom styling
+- 🔌 **Developer Friendly**: Extensive hooks, filters, and REST API
+- 🌍 **Translation Ready**: Full internationalization support
+
+## Installation
+
+### From WordPress.org
+1. Search for "Plugin Name" in your WordPress admin
+2. Click "Install Now" and then "Activate"
+
+### Manual Installation
+1. Download the latest release
+2. Upload to `/wp-content/plugins/plugin-slug/`
+3. Activate through the WordPress admin
+
+### Development Installation
+```bash
+git clone https://github.com/yourusername/plugin-slug.git
+cd plugin-slug
+composer install
+npm install
+npm run build
+```
+
+## Usage
+
+### Basic Shortcode
+```
+[plugin_slug_display]
+```
+
+### Advanced Shortcode with Options
+```
+[plugin_slug_display type="mortgage" providers="bank1,bank2" limit="10"]
+```
+
+### PHP Usage
+```php
+// Get rates programmatically
+$rates = plugin_slug_get_rates([
+    'type' => 'mortgage',
+    'providers' => ['bank1', 'bank2'],
+    'limit' => 10
+]);
+
+// Display rates
+foreach ($rates as $rate) {
+    echo $rate['provider'] . ': ' . $rate['rate'] . '%';
+}
+```
+
+## Hooks & Filters
+
+### Actions
+- `plugin_slug_before_display` - Before rate display
+- `plugin_slug_after_display` - After rate display
+- `plugin_slug_rate_updated` - When rate is updated
+
+### Filters
+- `plugin_slug_rate_data` - Modify rate data before display
+- `plugin_slug_display_template` - Override display template
+- `plugin_slug_provider_data` - Modify provider data
+
+## REST API
+
+### Endpoints
+- `GET /wp-json/plugin-slug/v1/rates` - Get rates
+- `POST /wp-json/plugin-slug/v1/rates` - Create rate
+- `GET /wp-json/plugin-slug/v1/providers` - Get providers
+
+### Example API Usage
+```javascript
+// Get rates
+fetch('/wp-json/plugin-slug/v1/rates?type=mortgage')
+  .then(response => response.json())
+  .then(data => console.log(data));
+```
+
+## Development
+
+### Prerequisites
+- PHP 7.4+
+- WordPress 5.0+
+- Node.js 16+
+- Composer
+
+### Setup
+```bash
+# Install dependencies
+composer install
+npm install
+
+# Build assets
+npm run build
+
+# Run tests
+composer test
+npm test
+```
+
+### Code Standards
+- PHP: WordPress Coding Standards
+- JavaScript: ESLint with WordPress config
+- CSS: Stylelint with WordPress config
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## Security
+
+If you discover a security issue, please email security@example.com instead of using the issue tracker.
+
+## License
+
+This plugin is licensed under the GPL v2 or later.
+
+## Support
+
+- Documentation: [Plugin Documentation](https://example.com/docs)
+- Support Forum: [WordPress.org Support](https://wordpress.org/support/plugin/plugin-slug)
+- GitHub Issues: [Report Issues](https://github.com/yourusername/plugin-slug/issues)
+```
+
+## Translation Files
+
+### POT File Generation
+```bash
+# Generate POT file
+wp i18n make-pot . languages/plugin-slug.pot --domain=plugin-slug --exclude=vendor,node_modules,tests
+```
+
+### Translation Workflow
+1. Generate POT file using WP-CLI
+2. Create PO files for each language
+3. Translate strings in PO files
+4. Generate MO files for production
+5. Include in plugin distribution
+
+### Translation Functions Reference
+```php
+// Basic translation
+__( 'Hello World', 'plugin-slug' );
+_e( 'Hello World', 'plugin-slug' );
+
+// Escaped translation
+esc_html__( 'Hello World', 'plugin-slug' );
+esc_html_e( 'Hello World', 'plugin-slug' );
+esc_attr__( 'Hello World', 'plugin-slug' );
+esc_attr_e( 'Hello World', 'plugin-slug' );
+
+// Context-aware translation
+_x( 'Post', 'verb', 'plugin-slug' );
+_ex( 'Post', 'verb', 'plugin-slug' );
+
+// Plural translation
+_n( 'One item', '%d items', $count, 'plugin-slug' );
+_nx( 'One item', '%d items', $count, 'context', 'plugin-slug' );
+
+// Noop translation (for JavaScript)
+_n_noop( 'One item', '%d items', 'plugin-slug' );
+```

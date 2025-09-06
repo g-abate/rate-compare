@@ -1,0 +1,501 @@
+---
+description: "JavaScript, CSS, and asset management for WordPress plugins"
+globs: ["**/*.js", "**/*.ts", "**/*.css", "**/*.scss", "**/package.json", "**/webpack.config.*", "**/vite.config.*"]
+alwaysApply: false
+---
+
+# JavaScript & Assets
+
+## Asset Enqueuing
+
+### Proper Script Enqueuing
+```php
+// Good: Proper script enqueuing with dependencies and versioning
+function plugin_slug_enqueue_scripts(): void {
+    wp_enqueue_script(
+        'plugin-slug-admin',
+        plugin_dir_url( __FILE__ ) . 'assets/js/admin.js',
+        [ 'jquery', 'wp-util' ],
+        PLUGIN_SLUG_VERSION,
+        true // Load in footer
+    );
+    
+    // Localize script data
+    wp_localize_script( 'plugin-slug-admin', 'pluginSlugAdmin', [
+        'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+        'nonce'      => wp_create_nonce( 'plugin_slug_ajax' ),
+        'strings'    => [
+            'confirmDelete' => __( 'Are you sure you want to delete this item?', 'plugin-slug' ),
+            'saving'       => __( 'Saving...', 'plugin-slug' ),
+            'saved'        => __( 'Saved successfully!', 'plugin-slug' ),
+        ],
+    ] );
+}
+
+// Bad: Enqueuing without proper parameters
+function bad_enqueue() {
+    wp_enqueue_script( 'script', 'script.js' ); // No version, no dependencies
+}
+```
+
+### Conditional Enqueuing
+```php
+// Good: Enqueue only when needed
+function plugin_slug_enqueue_admin_scripts( string $hook_suffix ): void {
+    // Only enqueue on specific admin pages
+    if ( 'toplevel_page_plugin-slug-settings' !== $hook_suffix ) {
+        return;
+    }
+    
+    wp_enqueue_script( 'plugin-slug-admin' );
+    wp_enqueue_style( 'plugin-slug-admin' );
+}
+```
+
+## JavaScript Standards
+
+### Modern JavaScript (ES6+)
+```javascript
+// Good: Modern JavaScript with proper structure
+(function($) {
+    'use strict';
+    
+    const PluginSlugAdmin = {
+        init() {
+            this.bindEvents();
+            this.initializeComponents();
+        },
+        
+        bindEvents() {
+            $(document).on('click', '.plugin-slug-delete', this.handleDelete.bind(this));
+            $(document).on('submit', '#plugin-slug-form', this.handleFormSubmit.bind(this));
+        },
+        
+        initializeComponents() {
+            this.initDataTables();
+            this.initTooltips();
+        },
+        
+        handleDelete(event) {
+            event.preventDefault();
+            
+            if (!confirm(pluginSlugAdmin.strings.confirmDelete)) {
+                return;
+            }
+            
+            const itemId = $(event.currentTarget).data('item-id');
+            this.deleteItem(itemId);
+        },
+        
+        async deleteItem(itemId) {
+            try {
+                const response = await $.ajax({
+                    url: pluginSlugAdmin.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'plugin_slug_delete_item',
+                        item_id: itemId,
+                        nonce: pluginSlugAdmin.nonce
+                    }
+                });
+                
+                if (response.success) {
+                    this.showNotice('success', response.data.message);
+                    this.refreshList();
+                } else {
+                    this.showNotice('error', response.data.message);
+                }
+            } catch (error) {
+                console.error('Delete failed:', error);
+                this.showNotice('error', 'An error occurred');
+            }
+        },
+        
+        showNotice(type, message) {
+            const notice = $(`<div class="notice notice-${type} is-dismissible">
+                <p>${message}</p>
+            </div>`);
+            
+            $('.wrap h1').after(notice);
+            
+            setTimeout(() => notice.fadeOut(), 5000);
+        }
+    };
+    
+    // Initialize when document is ready
+    $(document).ready(() => {
+        PluginSlugAdmin.init();
+    });
+    
+})(jQuery);
+```
+
+### AJAX Handling
+```javascript
+// Good: Proper AJAX implementation
+const PluginSlugAjax = {
+    async makeRequest(action, data = {}) {
+        const requestData = {
+            action: `plugin_slug_${action}`,
+            nonce: pluginSlugAdmin.nonce,
+            ...data
+        };
+        
+        try {
+            const response = await $.ajax({
+                url: pluginSlugAdmin.ajaxUrl,
+                type: 'POST',
+                data: requestData,
+                dataType: 'json'
+            });
+            
+            if (!response.success) {
+                throw new Error(response.data?.message || 'Request failed');
+            }
+            
+            return response.data;
+        } catch (error) {
+            console.error(`AJAX ${action} failed:`, error);
+            throw error;
+        }
+    },
+    
+    async saveSettings(settings) {
+        return this.makeRequest('save_settings', { settings });
+    },
+    
+    async getItems(filters = {}) {
+        return this.makeRequest('get_items', { filters });
+    }
+};
+```
+
+## CSS Standards
+
+### SCSS Structure
+```scss
+// assets/scss/admin.scss
+// Good: Organized SCSS with proper nesting
+.plugin-slug-admin {
+    &__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        
+        h1 {
+            margin: 0;
+            color: #1d2327;
+        }
+    }
+    
+    &__content {
+        background: #fff;
+        border: 1px solid #c3c4c7;
+        border-radius: 4px;
+        padding: 2rem;
+        
+        .form-table {
+            th {
+                width: 200px;
+                padding: 1rem 0;
+                vertical-align: top;
+            }
+            
+            td {
+                padding: 1rem 0;
+            }
+        }
+    }
+    
+    &__notice {
+        margin: 1rem 0;
+        padding: 1rem;
+        border-left: 4px solid;
+        border-radius: 0 4px 4px 0;
+        
+        &--success {
+            background: #d1e7dd;
+            border-color: #0f5132;
+            color: #0f5132;
+        }
+        
+        &--error {
+            background: #f8d7da;
+            border-color: #842029;
+            color: #842029;
+        }
+    }
+}
+
+// Responsive design
+@media (max-width: 782px) {
+    .plugin-slug-admin {
+        &__header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        &__content {
+            padding: 1rem;
+        }
+    }
+}
+```
+
+### CSS Enqueuing
+```php
+// Good: Proper CSS enqueuing
+function plugin_slug_enqueue_styles(): void {
+    wp_enqueue_style(
+        'plugin-slug-admin',
+        plugin_dir_url( __FILE__ ) . 'assets/css/admin.css',
+        [],
+        PLUGIN_SLUG_VERSION
+    );
+    
+    // Conditional styles
+    if ( is_rtl() ) {
+        wp_enqueue_style(
+            'plugin-slug-admin-rtl',
+            plugin_dir_url( __FILE__ ) . 'assets/css/admin-rtl.css',
+            [ 'plugin-slug-admin' ],
+            PLUGIN_SLUG_VERSION
+        );
+    }
+}
+```
+
+## Build Process
+
+### Webpack Configuration
+```javascript
+// webpack.config.js
+const path = require('path');
+
+module.exports = {
+    entry: {
+        'admin': './assets/src/js/admin.js',
+        'public': './assets/src/js/public.js',
+        'admin-css': './assets/src/scss/admin.scss',
+        'public-css': './assets/src/scss/public.scss'
+    },
+    output: {
+        path: path.resolve(__dirname, 'assets/dist'),
+        filename: 'js/[name].js',
+        clean: true
+    },
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env']
+                    }
+                }
+            },
+            {
+                test: /\.scss$/,
+                use: [
+                    'file-loader?name=css/[name].css',
+                    'sass-loader'
+                ]
+            }
+        ]
+    },
+    externals: {
+        jquery: 'jQuery'
+    }
+};
+```
+
+### Package.json
+```json
+{
+    "name": "plugin-slug",
+    "version": "1.0.0",
+    "description": "WordPress plugin for rate comparison",
+    "scripts": {
+        "build": "webpack --mode=production",
+        "dev": "webpack --mode=development --watch",
+        "lint:js": "eslint assets/src/js/**/*.js",
+        "lint:css": "stylelint assets/src/scss/**/*.scss",
+        "test": "jest"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.22.0",
+        "@babel/preset-env": "^7.22.0",
+        "babel-loader": "^9.1.0",
+        "eslint": "^8.42.0",
+        "file-loader": "^6.2.0",
+        "sass": "^1.62.0",
+        "sass-loader": "^13.3.0",
+        "stylelint": "^15.10.0",
+        "webpack": "^5.84.0",
+        "webpack-cli": "^5.1.0"
+    }
+}
+```
+
+## Performance Optimization
+
+### Asset Optimization
+```php
+// Good: Conditional asset loading
+function plugin_slug_enqueue_assets(): void {
+    // Only load on frontend
+    if ( is_admin() ) {
+        return;
+    }
+    
+    // Check if plugin functionality is needed
+    if ( ! plugin_slug_should_load_assets() ) {
+        return;
+    }
+    
+    wp_enqueue_script(
+        'plugin-slug-public',
+        plugin_dir_url( __FILE__ ) . 'assets/dist/js/public.js',
+        [],
+        PLUGIN_SLUG_VERSION,
+        true
+    );
+    
+    wp_enqueue_style(
+        'plugin-slug-public',
+        plugin_dir_url( __FILE__ ) . 'assets/dist/css/public.css',
+        [],
+        PLUGIN_SLUG_VERSION
+    );
+}
+
+function plugin_slug_should_load_assets(): bool {
+    // Only load on specific pages or when shortcode is present
+    global $post;
+    
+    if ( is_singular() && has_shortcode( $post->post_content, 'plugin_slug_display' ) ) {
+        return true;
+    }
+    
+    return false;
+}
+```
+
+### Lazy Loading
+```javascript
+// Good: Lazy loading for heavy components
+const PluginSlugLazyLoader = {
+    init() {
+        this.observeElements();
+    },
+    
+    observeElements() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    this.loadComponent(entry.target);
+                    observer.unobserve(entry.target);
+                }
+            });
+        });
+        
+        document.querySelectorAll('[data-lazy-load]').forEach(el => {
+            observer.observe(el);
+        });
+    },
+    
+    async loadComponent(element) {
+        const component = element.dataset.lazyLoad;
+        
+        try {
+            const module = await import(`./components/${component}.js`);
+            module.default.init(element);
+        } catch (error) {
+            console.error('Failed to load component:', error);
+        }
+    }
+};
+```
+
+## WordPress Integration
+
+### Block Editor Integration
+```javascript
+// assets/src/js/blocks/rate-comparison-block.js
+import { registerBlockType } from '@wordpress/blocks';
+import { __ } from '@wordpress/i18n';
+
+registerBlockType('plugin-slug/rate-comparison', {
+    title: __('Rate Comparison', 'plugin-slug'),
+    icon: 'chart-bar',
+    category: 'widgets',
+    
+    edit: function(props) {
+        const { attributes, setAttributes } = props;
+        
+        return wp.element.createElement('div', {
+            className: 'plugin-slug-block-editor'
+        }, [
+            wp.element.createElement('h3', {}, __('Rate Comparison Block', 'plugin-slug')),
+            wp.element.createElement('p', {}, __('Configure your rate comparison settings here.', 'plugin-slug'))
+        ]);
+    },
+    
+    save: function() {
+        return null; // Server-side rendering
+    }
+});
+```
+
+### REST API Integration
+```javascript
+// Good: REST API client
+class PluginSlugApiClient {
+    constructor(namespace = 'plugin-slug/v1') {
+        this.namespace = namespace;
+        this.nonce = wpApiSettings?.nonce || '';
+    }
+    
+    async request(endpoint, options = {}) {
+        const url = `${wpApiSettings.root}${this.namespace}/${endpoint}`;
+        
+        const config = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': this.nonce,
+            },
+            ...options
+        };
+        
+        try {
+            const response = await fetch(url, config);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('API request failed:', error);
+            throw error;
+        }
+    }
+    
+    async getRates(filters = {}) {
+        const params = new URLSearchParams(filters);
+        return this.request(`rates?${params}`);
+    }
+    
+    async saveSettings(settings) {
+        return this.request('settings', {
+            method: 'POST',
+            body: JSON.stringify(settings)
+        });
+    }
+}
+```

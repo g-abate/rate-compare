@@ -22,11 +22,16 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Environment:**
- - WordPress Version: [e.g. 6.4]
- - PHP Version: [e.g. 8.1]
+**Environment (please complete the following information):**
+ - OS: [e.g. iOS]
+ - Browser [e.g. chrome, safari]
+ - Version [e.g. 22]
+ - WordPress Version (if applicable): [e.g. 6.4]
  - Plugin Version: [e.g. 1.0.0]
- - Browser: [e.g. chrome, safari]
 
 **Additional context**
 Add any other context about the problem here.
+
+**TDD Approach**
+- [ ] I have written a failing test that reproduces this bug
+- [ ] I will implement the fix following TDD principles

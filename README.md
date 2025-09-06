@@ -1,86 +1,185 @@
-# Rate Compare Plugin
+# Rate Compare - Universal Rate Comparison System
 
-A WordPress plugin for comparing short-term rental rates across multiple booking channels including Airbnb, VRBO, Booking.com, and OwnerRez.
+A comprehensive rate comparison system for short-term rental properties, available as both a WordPress plugin and a universal JavaScript snippet.
 
-## Features
+## 🏗️ Monorepo Structure
 
-- **Multi-Channel Rate Comparison**: Compare rates from Airbnb, VRBO, Booking.com, and OwnerRez
-- **Real-Time Rate Fetching**: Automatically fetch and update rates from external APIs and web scraping
-- **Smart Caching**: 15-minute caching system for optimal performance
-- **Admin Interface**: Easy configuration and management of channel settings
-- **Responsive Design**: Mobile-friendly rate comparison popup
-- **Security First**: Comprehensive input validation and output escaping
-- **Translation Ready**: Full internationalization support
+This repository contains three main packages:
 
-## Installation
+- **`wordpress-plugin/`** - WordPress plugin for rate comparison
+- **`universal-snippet/`** - Universal JavaScript snippet for any website
+- **`shared/`** - Shared core logic and utilities
 
-1. Download the plugin files
-2. Upload to `/wp-content/plugins/rate-compare/`
-3. Activate the plugin through the 'Plugins' menu in WordPress
-4. Configure your channel settings in the admin panel
+## 🚀 Quick Start
 
-## Configuration
+### Prerequisites
 
-1. Go to **Rate Compare** in your WordPress admin menu
-2. Add your property URLs for each channel (Airbnb, VRBO, Booking.com)
-3. Configure your OwnerRez API credentials
-4. Set up rate fetching schedules and caching preferences
+- Node.js 18+ and npm 9+
+- PHP 7.4+ (for WordPress plugin)
+- Composer (for WordPress plugin)
 
-## Requirements
-
-- WordPress 5.0 or higher
-- PHP 7.4 or higher
-- MySQL 5.6 or higher
-
-## Development
-
-This plugin follows WordPress coding standards and uses Test-Driven Development (TDD) approach.
-
-### Setup Development Environment
+### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/rate-compare.git
-cd rate-compare
+# Install all dependencies
+npm run install:all
 
-# Install dependencies
-composer install
-npm install
-
-# Run tests
-composer test
-npm test
+# Or install individually
+npm install                    # Root dependencies
+cd shared && npm install       # Shared library
+cd ../universal-snippet && npm install  # Universal snippet
+cd ../wordpress-plugin && composer install  # WordPress plugin
 ```
 
-### Branching Strategy
+### Development
 
-This project uses GitHub Flow:
-- `main` - Production-ready code
-- `feature/*` - New features
-- `bugfix/*` - Bug fixes
-- `hotfix/*` - Critical production fixes
+```bash
+# Run all tests
+npm test
 
-## Contributing
+# Run tests for specific package
+npm run test:shared
+npm run test:universal-snippet
+npm run test:wordpress
+
+# Build all packages
+npm run build
+
+# Build specific package
+npm run build:shared
+npm run build:universal-snippet
+
+# Development mode
+npm run dev
+```
+
+## 📦 Packages
+
+### WordPress Plugin (`wordpress-plugin/`)
+
+A full-featured WordPress plugin that provides:
+- Admin interface for configuration
+- Frontend rate comparison display
+- Integration with WordPress hooks and filters
+- Database management for configurations
+
+**Installation:**
+1. Upload the `wordpress-plugin/` folder to `/wp-content/plugins/`
+2. Activate the plugin in WordPress admin
+3. Configure your property listings
+
+### Universal Snippet (`universal-snippet/`)
+
+A lightweight JavaScript snippet that works on any website:
+- Zero dependencies
+- CDN distribution
+- Configuration panel for non-technical users
+- Mobile-first responsive design
+
+**Installation:**
+```html
+<script>
+(function(){
+  if (window.__rateCompareLoaded) return; 
+  window.__rateCompareLoaded = true;
+  var s = document.createElement('script');
+  s.async = true; s.defer = true; 
+  s.src = 'https://cdn.example.com/rate-compare.umd.js';
+  (document.head || document.documentElement).appendChild(s);
+})();
+</script>
+```
+
+### Shared Library (`shared/`)
+
+Core logic shared between WordPress plugin and universal snippet:
+- Rate fetching from multiple channels (Airbnb, VRBO, Booking.com, Expedia)
+- Data validation and normalization
+- Caching strategies
+- Error handling
+
+## 🛠️ Development
+
+### Code Quality
+
+```bash
+# Lint all code
+npm run lint
+
+# Fix linting issues
+npm run lint:fix
+
+# Type checking
+npm run typecheck
+```
+
+### Testing
+
+```bash
+# Unit tests
+npm test
+
+# E2E tests
+npm run test:e2e
+
+# Coverage reports
+npm run test:coverage
+```
+
+### Building
+
+```bash
+# Build all packages
+npm run build
+
+# Clean build artifacts
+npm run clean
+```
+
+## 📋 Supported Channels
+
+- **Airbnb** - Web scraping and API integration
+- **VRBO** - Web scraping and API integration  
+- **Booking.com** - Web scraping and API integration
+- **Expedia** - Web scraping and API integration
+
+## 🔧 Configuration
+
+Both the WordPress plugin and universal snippet support:
+- Multiple property configurations
+- Custom theming and branding
+- Date range selection
+- Real-time rate fetching
+- Caching for performance
+
+## 📚 Documentation
+
+- [WordPress Plugin Documentation](wordpress-plugin/README.md)
+- [Universal Snippet Documentation](universal-snippet/README.md)
+- [Shared Library Documentation](shared/README.md)
+- [API Reference](docs/api.md)
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
-## License
+## 📄 License
 
-This plugin is licensed under the GPL v2 or later.
+GPL-2.0-or-later
 
-## Support
+## 🆘 Support
 
-For support, please open an issue on GitHub or contact the plugin author.
+- [GitHub Issues](https://github.com/g-abate/rate-compare/issues)
+- [Documentation](https://github.com/g-abate/rate-compare#readme)
 
-## Changelog
+## 🏷️ Version
 
-### 1.0.0
-- Initial release
-- Multi-channel rate comparison
-- Admin interface
-- Caching system
-- Security features
+Current version: 1.0.0
+
+---
+
+**Note**: This is a monorepo. Each package has its own `package.json` and can be developed independently while sharing common code through the `shared/` directory.
