@@ -1,0 +1,127 @@
+/**
+ * Rate Compare Plugin Styles
+ *
+ * @package Rate_Compare
+ * @since 1.0.0
+ */
+
+/* Rate Compare Modal */
+.rate-compare-modal {
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rate-compare-modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.rate-compare-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.rate-compare-close:hover {
+    color: #000;
+}
+
+/* Rate Compare Button */
+.rate-compare-button {
+    background-color: #0073aa;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.rate-compare-button:hover {
+    background-color: #005a87;
+}
+
+.rate-compare-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Rate Comparison Display */
+.rate-comparison {
+    margin: 20px 0;
+}
+
+.rate-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.rate-item:last-child {
+    border-bottom: none;
+}
+
+.rate-channel {
+    font-weight: bold;
+    color: #333;
+}
+
+.rate-price {
+    font-size: 18px;
+    font-weight: bold;
+    color: #0073aa;
+}
+
+.rate-savings {
+    color: #46b450;
+    font-weight: bold;
+}
+
+.rate-loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.rate-error {
+    color: #d63638;
+    padding: 10px;
+    background-color: #fcf0f1;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .rate-compare-modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .rate-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}

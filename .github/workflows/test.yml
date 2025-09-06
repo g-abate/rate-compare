@@ -1,0 +1,230 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # WordPress Plugin Tests
+  wordpress-tests:
+    name: WordPress Plugin Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: [7.4, 8.0, 8.1, 8.2]
+        wordpress-version: [latest, 6.3, 6.2]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, dom, fileinfo, libxml, mysql, zip
+        coverage: xdebug
+        
+    - name: Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: wordpress-plugin/vendor
+        key: composer-${{ matrix.php-version }}-${{ hashFiles('wordpress-plugin/composer.lock') }}
+        
+    - name: Install Composer dependencies
+      working-directory: wordpress-plugin
+      run: composer install --prefer-dist --no-progress --no-suggest
+      
+    - name: Setup WordPress test environment
+      working-directory: wordpress-plugin
+      run: |
+        bash tests/bin/install-wp-tests.sh wordpress_test root '' localhost ${{ matrix.wordpress-version }}
+        
+    - name: Run PHPUnit tests
+      working-directory: wordpress-plugin
+      run: composer test
+      env:
+        WP_TESTS_DIR: /tmp/wordpress-tests-lib
+        WP_CORE_DIR: /tmp/wordpress/
+        
+    - name: Run PHPStan analysis
+      working-directory: wordpress-plugin
+      run: composer stan
+      
+    - name: Run PHPCS
+      working-directory: wordpress-plugin
+      run: composer cs
+      
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: wordpress-plugin/coverage.xml
+        flags: wordpress
+        name: wordpress-coverage
+
+  # Shared Library Tests
+  shared-tests:
+    name: Shared Library Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18, 20]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run shared library tests
+      run: npm run test:shared
+      
+    - name: Run shared library linting
+      run: npm run lint:shared
+      
+    - name: Run shared library type checking
+      run: npm run typecheck:shared
+      
+    - name: Build shared library
+      run: npm run build:shared
+      
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: shared/coverage/lcov.info
+        flags: shared
+        name: shared-coverage
+
+  # Universal Snippet Tests
+  universal-snippet-tests:
+    name: Universal Snippet Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18, 20]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run universal snippet tests
+      run: npm run test:universal-snippet
+      
+    - name: Run universal snippet linting
+      run: npm run lint:universal-snippet
+      
+    - name: Run universal snippet type checking
+      run: npm run typecheck:universal-snippet
+      
+    - name: Build universal snippet
+      run: npm run build:universal-snippet
+      
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: universal-snippet/coverage/lcov.info
+        flags: universal-snippet
+        name: universal-snippet-coverage
+
+  # End-to-End Tests
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+      
+    - name: Run E2E tests
+      run: npx playwright test
+      
+    - name: Upload E2E test results
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
+
+  # Security Scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Code Quality Gate
+  quality-gate:
+    name: Code Quality Gate
+    runs-on: ubuntu-latest
+    needs: [wordpress-tests, shared-tests, universal-snippet-tests, e2e-tests, security-scan]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run all quality checks
+      run: |
+        echo "All tests passed successfully!"
+        echo "WordPress tests: ✅"
+        echo "Shared library tests: ✅"
+        echo "Universal snippet tests: ✅"
+        echo "E2E tests: ✅"
+        echo "Security scan: ✅"

@@ -65,14 +65,14 @@
   - [x] 1.3 Create GitHub repository with branch protection rules
   - [x] 1.4 Set up basic project structure and documentation
 
-- [ ] 2.0 WordPress Plugin Foundation Setup
-  - [ ] 2.1 Create main plugin file (rate-compare.php) with WordPress headers and security guards
-  - [ ] 2.2 Set up plugin directory structure following WordPress standards
-  - [ ] 2.3 Create composer.json with WordPress coding standards and testing dependencies
-  - [ ] 2.4 Set up autoloading for plugin classes using Composer
-  - [ ] 2.5 Create plugin constants and configuration options
-  - [ ] 2.6 Set up text domain loading and internationalization
-  - [ ] 2.7 Create uninstall.php for proper cleanup on plugin removal
+- [x] 2.0 WordPress Plugin Foundation Setup
+  - [x] 2.1 Create main plugin file (rate-compare.php) with WordPress headers and security guards
+  - [x] 2.2 Set up plugin directory structure following WordPress standards
+  - [x] 2.3 Create composer.json with WordPress coding standards and testing dependencies
+  - [x] 2.4 Set up autoloading for plugin classes using Composer
+  - [x] 2.5 Create plugin constants and configuration options
+  - [x] 2.6 Set up text domain loading and internationalization
+  - [x] 2.7 Create uninstall.php for proper cleanup on plugin removal
 
 - [ ] 3.0 Test-Driven Development Infrastructure
   - [ ] 3.1 Set up PHPUnit testing framework with WordPress test environment

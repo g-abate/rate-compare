@@ -1,0 +1,169 @@
+name: TDD Workflow
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  tdd-validation:
+    name: TDD Process Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Validate TDD Process
+      run: |
+        echo "🔍 Validating TDD Process..."
+        
+        # Check if this is the main branch
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "✅ Main branch - skipping TDD validation"
+          exit 0
+        fi
+        
+        # Get the list of changed files
+        CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+        echo "Changed files: $CHANGED_FILES"
+        
+        # Check for test files
+        TEST_FILES=$(echo "$CHANGED_FILES" | grep -E "\.(test|spec)\.(js|ts|php)$" || true)
+        SOURCE_FILES=$(echo "$CHANGED_FILES" | grep -E "\.(js|ts|php)$" | grep -v -E "\.(test|spec)\.(js|ts|php)$" || true)
+        
+        if [ -z "$SOURCE_FILES" ]; then
+          echo "ℹ️ No source files changed - skipping TDD validation"
+          exit 0
+        fi
+        
+        if [ -z "$TEST_FILES" ]; then
+          echo "❌ TDD Violation: No test files found for changed source files"
+          echo "Changed source files: $SOURCE_FILES"
+          echo "Please write tests first following TDD principles"
+          exit 1
+        fi
+        
+        echo "✅ TDD Process: Test files found for source changes"
+        echo "Test files: $TEST_FILES"
+        echo "Source files: $SOURCE_FILES"
+
+  test-coverage:
+    name: Test Coverage Validation
+    runs-on: ubuntu-latest
+    needs: tdd-validation
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests with coverage
+      run: |
+        # Run shared library tests
+        cd shared && npm test -- --coverage --reporter=json --outputFile=coverage.json
+        
+        # Run universal snippet tests
+        cd ../universal-snippet && npm test -- --coverage --reporter=json --outputFile=coverage.json
+        
+    - name: Check coverage thresholds
+      run: |
+        echo "🔍 Checking test coverage..."
+        
+        # Check shared library coverage
+        if [ -f shared/coverage.json ]; then
+          SHARED_COVERAGE=$(node -p "JSON.parse(require('fs').readFileSync('shared/coverage.json', 'utf8')).total.lines.pct")
+          echo "Shared library coverage: ${SHARED_COVERAGE}%"
+          
+          if (( $(echo "$SHARED_COVERAGE < 80" | bc -l) )); then
+            echo "❌ Shared library coverage below 80%: ${SHARED_COVERAGE}%"
+            exit 1
+          fi
+        fi
+        
+        # Check universal snippet coverage
+        if [ -f universal-snippet/coverage.json ]; then
+          UNIVERSAL_COVERAGE=$(node -p "JSON.parse(require('fs').readFileSync('universal-snippet/coverage.json', 'utf8')).total.lines.pct")
+          echo "Universal snippet coverage: ${UNIVERSAL_COVERAGE}%"
+          
+          if (( $(echo "$UNIVERSAL_COVERAGE < 80" | bc -l) )); then
+            echo "❌ Universal snippet coverage below 80%: ${UNIVERSAL_COVERAGE}%"
+            exit 1
+          fi
+        fi
+        
+        echo "✅ Coverage thresholds met"
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    needs: tdd-validation
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.1
+        extensions: mbstring, dom, fileinfo, libxml, mysql, zip
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run ESLint
+      run: npm run lint
+      
+    - name: Run TypeScript checks
+      run: npm run typecheck
+      
+    - name: Run PHP CodeSniffer
+      run: |
+        cd wordpress-plugin
+        composer install --no-interaction
+        composer cs
+        
+    - name: Run PHPStan
+      run: |
+        cd wordpress-plugin
+        composer stan
+
+  tdd-summary:
+    name: TDD Process Summary
+    runs-on: ubuntu-latest
+    needs: [tdd-validation, test-coverage, code-quality]
+    if: always()
+    
+    steps:
+    - name: TDD Process Summary
+      run: |
+        echo "🎯 TDD Process Summary"
+        echo "======================"
+        echo "✅ TDD Validation: ${{ needs.tdd-validation.result }}"
+        echo "✅ Test Coverage: ${{ needs.test-coverage.result }}"
+        echo "✅ Code Quality: ${{ needs.code-quality.result }}"
+        
+        if [[ "${{ needs.tdd-validation.result }}" == "success" && "${{ needs.test-coverage.result }}" == "success" && "${{ needs.code-quality.result }}" == "success" ]]; then
+          echo "🎉 All TDD checks passed! Ready for review."
+        else
+          echo "❌ Some TDD checks failed. Please address the issues."
+          exit 1
+        fi
