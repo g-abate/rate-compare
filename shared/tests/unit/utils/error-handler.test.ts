@@ -253,7 +253,7 @@ describe('RateCompareError', () => {
 
     expect(error.severity).toBe(ErrorSeverity.MEDIUM);
     expect(error.category).toBe(ErrorCategory.UNKNOWN);
-    expect(error.context).toBeUndefined();
+    expect(error.context).toEqual({});
     expect(error.isOperational).toBe(true);
   });
 

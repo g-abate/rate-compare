@@ -306,12 +306,13 @@ export class WebScraper {
     }
 
     try {
-      const data = this.extractRateData(response.data, request.selectors);
+      const data = this.extractRateData(response.data as string, request.selectors);
 
       if (!data) {
         return {
           success: false,
           error: 'Failed to extract rate data from response',
+          timestamp: new Date().toISOString(),
         };
       }
 
@@ -405,7 +406,7 @@ export class WebScraper {
       }
 
       if (selectors.totalPrice) {
-        data.totalPrice = this.extractPriceFromText(html, selectors.totalPrice);
+        data.totalPrice = this.extractPriceFromText(html, selectors.totalPrice) || 0;
       }
 
       // Calculate total if not provided
@@ -429,7 +430,7 @@ export class WebScraper {
       // Extract availability
       if (selectors.availability) {
         const availabilityText = this.extractTextFromSelector(html, selectors.availability);
-        data.availability = this.parseAvailability(availabilityText);
+        data.availability = this.parseAvailability(availabilityText || '');
       }
 
       return data as ScrapedRateData;
@@ -485,7 +486,8 @@ export class WebScraper {
 
       if (selectors.totalPrice) {
         const element = document.querySelector(selectors.totalPrice);
-        data.totalPrice = element ? this.parsePrice(element.textContent || '') : undefined;
+        const price = element ? this.parsePrice(element.textContent || '') : 0;
+        data.totalPrice = price;
       }
 
       // Calculate total if not provided
@@ -560,12 +562,12 @@ export class WebScraper {
       const id = selector.substring(1);
       const regex = new RegExp(`<[^>]*id="[^"]*${id}[^"]*"[^>]*>([^<]*)</[^>]*>`, 'i');
       const match = html.match(regex);
-      return match ? match[1].trim() : null;
+      return match && match[1] ? match[1].trim() : null;
     } else {
       // Element selector
       const regex = new RegExp(`<${selector}[^>]*>([^<]*)</${selector}>`, 'i');
       const match = html.match(regex);
-      return match ? match[1].trim() : null;
+      return match && match[1] ? match[1].trim() : null;
     }
   }
 
@@ -675,7 +677,7 @@ export function withRetry<T extends unknown[], R>(
   config: RetryConfig
 ): (...args: T) => Promise<R> {
   return async (...args: T): Promise<R> => {
-    let lastError: Error;
+    let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
       try {
@@ -737,7 +739,7 @@ export const PLATFORM_SELECTORS: Record<string, ScrapingSelectors> = {
     basePrice: '.nightly-rate, .price-per-night, [data-testid="nightly-rate"]',
     cleaningFee: '.cleaning-fee, [data-testid="cleaning-fee"]',
     taxes: '.taxes, .tax-amount, [data-testid="taxes"]',
-    fees: '.fees, .additional-fees, [data-testid="fees"]',
+    otherFees: '.fees, .additional-fees, [data-testid="fees"]',
     totalPrice: '.total-price, .total-amount, [data-testid="total-price"]',
     availability: '.availability, .available-dates, [data-testid="availability"]',
     currency: '.currency, .price-currency, [data-testid="currency"]',
@@ -745,7 +747,7 @@ export const PLATFORM_SELECTORS: Record<string, ScrapingSelectors> = {
   booking: {
     basePrice: '.bui-price-display__value, .prco-valign-middle-helper, [data-testid="price"]',
     taxes: '.taxes, .tax-amount, [data-testid="taxes"]',
-    fees: '.fees, .additional-fees, [data-testid="fees"]',
+    otherFees: '.fees, .additional-fees, [data-testid="fees"]',
     totalPrice: '.total-price, .total-amount, [data-testid="total-price"]',
     availability: '.availability, .available-dates, [data-testid="availability"]',
     currency: '.currency, .price-currency, [data-testid="currency"]',
@@ -753,7 +755,7 @@ export const PLATFORM_SELECTORS: Record<string, ScrapingSelectors> = {
   expedia: {
     basePrice: '.uitk-price-display, .price-display, [data-testid="price"]',
     taxes: '.taxes, .tax-amount, [data-testid="taxes"]',
-    fees: '.fees, .additional-fees, [data-testid="fees"]',
+    otherFees: '.fees, .additional-fees, [data-testid="fees"]',
     totalPrice: '.total-price, .total-amount, [data-testid="total-price"]',
     availability: '.availability, .available-dates, [data-testid="availability"]',
     currency: '.currency, .price-currency, [data-testid="currency"]',

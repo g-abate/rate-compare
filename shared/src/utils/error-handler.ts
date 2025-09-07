@@ -53,7 +53,7 @@ export class RateCompareError extends Error {
     this.code = code;
     this.severity = severity;
     this.category = category;
-    this.context = context;
+    this.context = context || {};
     this.timestamp = new Date().toISOString();
     this.isOperational = isOperational;
 
@@ -285,7 +285,7 @@ export class ErrorHandler {
   private logToConsole(data: Record<string, unknown>): void {
     const { level, message, severity, category, context, stack } = data;
 
-    const logMessage = `[Rate Compare ${level.toUpperCase()}] ${message}`;
+    const logMessage = `[Rate Compare ${(level as string).toUpperCase()}] ${message}`;
     const logData = { severity, category, context, stack };
 
     switch (level) {
