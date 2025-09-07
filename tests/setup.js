@@ -1,51 +1,82 @@
-// Test setup for Vitest
-import { vi } from 'vitest';
+/**
+ * Jest setup file for browser automation tests
+ */
 
-// Mock global objects that might be used in tests
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// Increase timeout for browser automation tests
+jest.setTimeout(300000);
 
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// Global test utilities
+global.testUtils = {
+  // Wait for a condition to be true
+  waitFor: async (condition, timeout = 10000, interval = 100) => {
+    const startTime = Date.now();
+    while (Date.now() - startTime < timeout) {
+      if (await condition()) {
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, interval));
+    }
+    throw new Error(`Condition not met within ${timeout}ms`);
+  },
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  // Create a mock Airbnb response
+  createMockAirbnbResponse: (overrides = {}) => ({
+    propertyId: '12345678',
+    propertyUrl: 'https://www.airbnb.com/rooms/12345678',
+    checkIn: '2025-09-15',
+    checkOut: '2025-09-22',
+    rates: [{
+      channel: 'airbnb',
+      basePrice: 100,
+      cleaningFee: 15,
+      serviceFee: 12,
+      taxes: 8,
+      totalPrice: 135,
+      currency: 'USD',
+      availability: true,
+      lastUpdated: new Date().toISOString(),
+      note: 'Mock data for testing'
+    }],
+    scrapedAt: new Date().toISOString(),
+    source: 'mock',
+    ...overrides
+  }),
+
+  // Generate random property ID
+  generatePropertyId: () => Math.floor(Math.random() * 1000000000).toString(),
+
+  // Generate random dates
+  generateDates: (daysFromNow = 30) => {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() + daysFromNow);
+    
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 7);
+    
+    return {
+      checkIn: startDate.toISOString().split('T')[0],
+      checkOut: endDate.toISOString().split('T')[0]
+    };
+  }
 };
-global.localStorage = localStorageMock;
 
-// Mock sessionStorage
-const sessionStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-};
-global.sessionStorage = sessionStorageMock;
+// Console logging for tests
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
 
-// Mock fetch
-global.fetch = vi.fn();
+// Suppress console output in tests unless DEBUG is set
+if (!process.env.DEBUG) {
+  console.log = () => {};
+  console.error = () => {};
+}
 
-// Mock console methods to reduce noise in tests
-global.console = {
-  ...console,
-  log: vi.fn(),
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
+// Restore console for specific test suites
+global.enableConsoleLogging = () => {
+  console.log = originalConsoleLog;
+  console.error = originalConsoleError;
 };
 
-// Clean up after each test
-afterEach(() => {
-  vi.clearAllMocks();
-});
+global.disableConsoleLogging = () => {
+  console.log = () => {};
+  console.error = () => {};
+};

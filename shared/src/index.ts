@@ -14,6 +14,7 @@ export * from './utils/error-handler';
 
 // API clients
 export * from './api/airbnb-scraper';
+export * from './api/browser-scraper';
 
 // Re-export types for convenience
 export type { RateData, PropertyConfig, RateComparisonResult } from './data-models/rate-data';

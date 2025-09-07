@@ -20,6 +20,279 @@ describe('AirbnbScraper', () => {
     vi.clearAllMocks();
   });
 
+  describe('Ethical Scraping Configuration', () => {
+    it('should initialize with default ethical configuration', () => {
+      const scraper = new AirbnbScraper();
+      const stats = scraper.getStats();
+      
+      expect(stats.totalRequests).toBe(0);
+      expect(stats.requestsThisHour).toBe(0);
+      expect(stats.rateLimitStatus.limit).toBe(100);
+      expect(stats.rateLimitStatus.remaining).toBe(100);
+      expect(stats.currentUserAgent).toBeTruthy();
+    });
+
+    it('should allow custom ethical configuration', () => {
+      const customConfig = {
+        ethicalConfig: {
+          respectRobotsTxt: false,
+          userAgentRotation: false,
+          headerRotation: false,
+          humanLikeDelays: false,
+          requestDelay: {
+            min: 1000,
+            max: 2000,
+          },
+        },
+        rateLimitConfig: {
+          maxRequestsPerHour: 50,
+        },
+      };
+
+      const scraper = new AirbnbScraper(customConfig);
+      const stats = scraper.getStats();
+      
+      expect(stats.rateLimitStatus.limit).toBe(50);
+    });
+
+    it('should track request history', () => {
+      const stats = scraper.getStats();
+      expect(stats.totalRequests).toBe(0);
+      
+      // Simulate adding requests to history
+      (scraper as any).addRequestToHistory('https://example.com');
+      (scraper as any).addRequestToHistory('https://example2.com');
+      
+      const updatedStats = scraper.getStats();
+      expect(updatedStats.totalRequests).toBe(2);
+    });
+  });
+
+  describe('User Agent and Header Rotation', () => {
+    it('should rotate user agents when enabled', () => {
+      const scraper = new AirbnbScraper({
+        ethicalConfig: {
+          userAgentRotation: true,
+        },
+      });
+
+      const userAgents = new Set();
+      
+      // Call rotateUserAgent multiple times
+      for (let i = 0; i < 10; i++) {
+        (scraper as any).rotateUserAgent();
+        userAgents.add((scraper as any).currentUserAgent);
+      }
+
+      // Should have multiple different user agents
+      expect(userAgents.size).toBeGreaterThan(1);
+    });
+
+    it('should use same user agent when rotation disabled', () => {
+      const scraper = new AirbnbScraper({
+        ethicalConfig: {
+          userAgentRotation: false,
+        },
+      });
+
+      const firstUserAgent = (scraper as any).currentUserAgent;
+      
+      // Call rotateUserAgent multiple times
+      for (let i = 0; i < 5; i++) {
+        (scraper as any).rotateUserAgent();
+      }
+
+      const lastUserAgent = (scraper as any).currentUserAgent;
+      expect(firstUserAgent).toBe(lastUserAgent);
+    });
+
+    it('should rotate headers when enabled', () => {
+      const scraper = new AirbnbScraper({
+        ethicalConfig: {
+          headerRotation: true,
+        },
+      });
+
+      const headerSets = new Set();
+      
+      // Call rotateHeaders multiple times
+      for (let i = 0; i < 10; i++) {
+        (scraper as any).rotateHeaders();
+        const headers = (scraper as any).currentHeaders;
+        headerSets.add(JSON.stringify(headers));
+      }
+
+      // Should have multiple different header sets
+      expect(headerSets.size).toBeGreaterThan(1);
+    });
+  });
+
+  describe('Rate Limiting', () => {
+    it('should check rate limits correctly', () => {
+      const scraper = new AirbnbScraper({
+        rateLimitConfig: {
+          maxRequestsPerHour: 2,
+        },
+      });
+
+      // Initially should be within limits
+      expect((scraper as any).checkRateLimit()).toBe(true);
+
+      // Add requests to reach limit
+      (scraper as any).addRequestToHistory('https://example.com');
+      (scraper as any).addRequestToHistory('https://example2.com');
+      
+      // Should exceed limit when exactly at limit (2 >= 2)
+      expect((scraper as any).checkRateLimit()).toBe(false);
+
+      // Add one more to exceed limit
+      (scraper as any).addRequestToHistory('https://example3.com');
+      
+      // Should exceed limit
+      expect((scraper as any).checkRateLimit()).toBe(false);
+    });
+
+    it('should filter old requests from history', () => {
+      const scraper = new AirbnbScraper();
+      
+      // Add a request from 2 hours ago
+      const oldRequest = {
+        timestamp: Date.now() - (2 * 60 * 60 * 1000),
+        url: 'https://old-request.com',
+      };
+      (scraper as any).requestHistory.push(oldRequest);
+
+      // Add a recent request
+      (scraper as any).addRequestToHistory('https://recent-request.com');
+
+      // Check rate limit should filter out old request
+      (scraper as any).checkRateLimit();
+      
+      const stats = scraper.getStats();
+      expect(stats.requestsThisHour).toBe(1);
+    });
+  });
+
+  describe('Human-like Delays', () => {
+    it('should calculate random delays within range', () => {
+      const scraper = new AirbnbScraper({
+        ethicalConfig: {
+          requestDelay: {
+            min: 1000,
+            max: 2000,
+          },
+        },
+      });
+
+      const delays = [];
+      for (let i = 0; i < 10; i++) {
+        delays.push((scraper as any).calculateDelay());
+      }
+
+      // All delays should be within range
+      delays.forEach(delay => {
+        expect(delay).toBeGreaterThanOrEqual(1000);
+        expect(delay).toBeLessThanOrEqual(2000);
+      });
+
+      // Should have some variation
+      const uniqueDelays = new Set(delays);
+      expect(uniqueDelays.size).toBeGreaterThan(1);
+    });
+
+    it('should not delay when human-like delays disabled', async () => {
+      const scraper = new AirbnbScraper({
+        ethicalConfig: {
+          humanLikeDelays: false,
+        },
+      });
+
+      const startTime = Date.now();
+      await (scraper as any).humanDelay();
+      const endTime = Date.now();
+
+      // Should complete almost immediately
+      expect(endTime - startTime).toBeLessThan(100);
+    });
+  });
+
+  describe('Robots.txt Compliance', () => {
+    it('should check robots.txt when enabled and return false for restrictions', async () => {
+      const mockRobotsResponse = {
+        ok: true,
+        text: () => Promise.resolve('User-agent: *\nDisallow: /api/'),
+      };
+
+      (global.fetch as any).mockResolvedValueOnce(mockRobotsResponse);
+
+      const scraper = new AirbnbScraper({
+        ethicalConfig: {
+          respectRobotsTxt: true,
+        },
+      });
+
+      const result = await scraper.checkRobotsTxt('https://example.com');
+      
+      expect(result).toBe(false); // Should return false when restrictions found
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://example.com/robots.txt',
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            'User-Agent': expect.any(String),
+          }),
+        })
+      );
+    });
+
+    it('should return true when no restrictions found', async () => {
+      const mockRobotsResponse = {
+        ok: true,
+        text: () => Promise.resolve('User-agent: *\nAllow: /'),
+      };
+
+      (global.fetch as any).mockResolvedValueOnce(mockRobotsResponse);
+
+      const scraper = new AirbnbScraper({
+        ethicalConfig: {
+          respectRobotsTxt: true,
+        },
+      });
+
+      const result = await scraper.checkRobotsTxt('https://example.com');
+      
+      expect(result).toBe(true); // Should return true when no restrictions
+    });
+
+    it('should skip robots.txt check when disabled', async () => {
+      const scraper = new AirbnbScraper({
+        ethicalConfig: {
+          respectRobotsTxt: false,
+        },
+      });
+
+      const result = await scraper.checkRobotsTxt('https://example.com');
+      
+      expect(result).toBe(true);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('should handle robots.txt fetch errors gracefully', async () => {
+      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+
+      const scraper = new AirbnbScraper({
+        ethicalConfig: {
+          respectRobotsTxt: true,
+        },
+      });
+
+      const result = await scraper.checkRobotsTxt('https://example.com');
+      
+      // Should return true (assume allowed) when can't check
+      expect(result).toBe(true);
+    });
+  });
+
   describe('Property URL Parsing', () => {
     it('should extract property ID from Airbnb URL', () => {
       const url = 'https://www.airbnb.com/rooms/54334574?check_in=2025-10-03&check_out=2025-10-06';
@@ -73,6 +346,12 @@ describe('AirbnbScraper', () => {
 
   describe('API Integration', () => {
     it('should fetch pricing data from stayCheckout API', async () => {
+      // Disable human-like delays for testing
+      const testScraper = new AirbnbScraper({
+        ethicalConfig: {
+          humanLikeDelays: false,
+        },
+      });
       const mockResponse = {
         data: {
           presentation: {
@@ -140,7 +419,7 @@ describe('AirbnbScraper', () => {
         json: () => Promise.resolve(mockResponse)
       });
 
-      const result = await scraper.fetchPricingData('54334574', '2025-10-03', '2025-10-06', 1, 0, 0, 0);
+      const result = await testScraper.fetchPricingData('54334574', '2025-10-03', '2025-10-06', 1, 0, 0, 0);
       
       expect(result).toEqual({
         basePrice: 1176.20,
@@ -158,21 +437,33 @@ describe('AirbnbScraper', () => {
     });
 
     it('should handle API errors gracefully', async () => {
+      const testScraper = new AirbnbScraper({
+        ethicalConfig: {
+          humanLikeDelays: false,
+        },
+      });
+      
       (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
       await expect(
-        scraper.fetchPricingData('54334574', '2025-10-03', '2025-10-06', 1, 0, 0, 0)
+        testScraper.fetchPricingData('54334574', '2025-10-03', '2025-10-06', 1, 0, 0, 0)
       ).rejects.toThrow('Network error');
     });
 
     it('should handle malformed API responses', async () => {
+      const testScraper = new AirbnbScraper({
+        ethicalConfig: {
+          humanLikeDelays: false,
+        },
+      });
+      
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: null })
       });
 
       await expect(
-        scraper.fetchPricingData('54334574', '2025-10-03', '2025-10-06', 1, 0, 0, 0)
+        testScraper.fetchPricingData('54334574', '2025-10-03', '2025-10-06', 1, 0, 0, 0)
       ).rejects.toThrow('Invalid API response structure');
     });
   });
@@ -282,6 +573,12 @@ describe('AirbnbScraper', () => {
 
   describe('Complete Scraping Flow', () => {
     it('should scrape rates from property URL with dates', async () => {
+      const testScraper = new AirbnbScraper({
+        ethicalConfig: {
+          humanLikeDelays: false,
+          respectRobotsTxt: false, // Skip robots.txt for testing
+        },
+      });
       const mockResponse = {
         data: {
           presentation: {
@@ -350,7 +647,7 @@ describe('AirbnbScraper', () => {
       });
 
       const url = 'https://www.airbnb.com/rooms/54334574?check_in=2025-10-03&check_out=2025-10-06';
-      const result = await scraper.scrapeRates(url, 1, 0, 0, 0);
+      const result = await testScraper.scrapeRates(url, 1, 0, 0, 0);
       
       expect(result).toEqual({
         channel: 'airbnb',
@@ -372,6 +669,12 @@ describe('AirbnbScraper', () => {
     });
 
     it('should handle URLs without dates by requiring them as parameters', async () => {
+      const testScraper = new AirbnbScraper({
+        ethicalConfig: {
+          humanLikeDelays: false,
+          respectRobotsTxt: false, // Skip robots.txt for testing
+        },
+      });
       const mockResponse = {
         data: {
           presentation: {
@@ -423,7 +726,7 @@ describe('AirbnbScraper', () => {
       });
 
       const url = 'https://www.airbnb.com/rooms/54334574';
-      const result = await scraper.scrapeRates(url, 1, 0, 0, 0, '2025-12-25', '2025-12-27');
+      const result = await testScraper.scrapeRates(url, 1, 0, 0, 0, '2025-12-25', '2025-12-27');
       
       expect(result.checkIn).toBe('2025-12-25');
       expect(result.checkOut).toBe('2025-12-27');
