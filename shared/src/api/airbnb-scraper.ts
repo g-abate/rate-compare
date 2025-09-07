@@ -1,6 +1,6 @@
 /**
  * Airbnb scraper implementation based on real API structure
- * 
+ *
  * @package Rate_Compare
  * @since 1.0.0
  */
@@ -79,13 +79,13 @@ export class AirbnbScraper {
         maxRetries: 3,
         retryDelay: 1000,
         backoffMultiplier: 2,
-        ...config.retryConfig
+        ...config.retryConfig,
       },
       rateLimitConfig: {
         requestsPerMinute: 60,
         burstLimit: 10,
-        ...config.rateLimitConfig
-      }
+        ...config.rateLimitConfig,
+      },
     };
   }
 
@@ -95,11 +95,11 @@ export class AirbnbScraper {
   extractPropertyId(url: string): string {
     const airbnbUrlPattern = /(?:https?:\/\/)?(?:www\.)?airbnb\.com\/rooms\/(\d+)/i;
     const match = url.match(airbnbUrlPattern);
-    
+
     if (!match || !match[1]) {
       throw new Error('Invalid Airbnb property URL');
     }
-    
+
     return match[1];
   }
 
@@ -110,11 +110,11 @@ export class AirbnbScraper {
     const urlObj = new URL(url);
     const checkIn = urlObj.searchParams.get('check_in');
     const checkOut = urlObj.searchParams.get('check_out');
-    
+
     if (!checkIn || !checkOut) {
       return null;
     }
-    
+
     return { checkIn, checkOut };
   }
 
@@ -131,7 +131,7 @@ export class AirbnbScraper {
     pets: number = 0
   ): Promise<Omit<RateData, 'channel' | 'propertyId' | 'checkIn' | 'checkOut'>> {
     const encodedPropertyId = btoa(`StayListing:${propertyId}`);
-    
+
     const variables = {
       input: {
         businessTravel: { workTrip: false },
@@ -142,44 +142,51 @@ export class AirbnbScraper {
           numberOfAdults: adults,
           numberOfChildren: children,
           numberOfInfants: infants,
-          numberOfPets: pets
+          numberOfPets: pets,
         },
         guestCurrencyOverride: 'USD',
         listingDetail: {},
         lux: {},
         metadata: {
-          internalFlags: ['LAUNCH_LOGIN_PHONE_AUTH']
+          internalFlags: ['LAUNCH_LOGIN_PHONE_AUTH'],
         },
         org: {},
         productId: encodedPropertyId,
         addOn: {
-          carbonOffsetParams: { isSelected: false }
+          carbonOffsetParams: { isSelected: false },
         },
-        quickPayData: null
-      }
+        quickPayData: null,
+      },
     };
 
-    const url = new URL('/api/v3/stayCheckout/417c0620877e4b93402f5b88a2471ef8683a42b66775578dffee68ad9def7816', this.config.baseURL);
+    const url = new URL(
+      '/api/v3/stayCheckout/417c0620877e4b93402f5b88a2471ef8683a42b66775578dffee68ad9def7816',
+      this.config.baseURL
+    );
     url.searchParams.set('operationName', 'stayCheckout');
     url.searchParams.set('locale', 'en');
     url.searchParams.set('currency', 'USD');
     url.searchParams.set('variables', JSON.stringify(variables));
-    url.searchParams.set('extensions', JSON.stringify({
-      persistedQuery: {
-        version: 1,
-        sha256Hash: '417c0620877e4b93402f5b88a2471ef8683a42b66775578dffee68ad9def7816'
-      }
-    }));
+    url.searchParams.set(
+      'extensions',
+      JSON.stringify({
+        persistedQuery: {
+          version: 1,
+          sha256Hash: '417c0620877e4b93402f5b88a2471ef8683a42b66775578dffee68ad9def7816',
+        },
+      })
+    );
 
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-        'Referer': 'https://www.airbnb.com/',
-        'Origin': 'https://www.airbnb.com'
+        Accept: 'application/json',
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+        Referer: 'https://www.airbnb.com/',
+        Origin: 'https://www.airbnb.com',
       },
-      signal: AbortSignal.timeout(this.config.timeout)
+      signal: AbortSignal.timeout(this.config.timeout),
     });
 
     if (!response.ok) {
@@ -187,7 +194,7 @@ export class AirbnbScraper {
     }
 
     const data: AirbnbApiResponse = await response.json();
-    
+
     if (!data?.data?.presentation?.stayCheckout) {
       throw new Error('Invalid API response structure');
     }
@@ -198,9 +205,13 @@ export class AirbnbScraper {
   /**
    * Extract rate data from API response
    */
-  extractRateDataFromResponse(apiResponse: AirbnbApiResponse): Omit<RateData, 'channel' | 'propertyId' | 'checkIn' | 'checkOut'> {
-    const priceBreakdown = apiResponse.data.presentation.stayCheckout.temporaryQuickPayData.productPriceBreakdown.priceBreakdown;
-    
+  extractRateDataFromResponse(
+    apiResponse: AirbnbApiResponse
+  ): Omit<RateData, 'channel' | 'propertyId' | 'checkIn' | 'checkOut'> {
+    const priceBreakdown =
+      apiResponse.data.presentation.stayCheckout.temporaryQuickPayData.productPriceBreakdown
+        .priceBreakdown;
+
     if (!priceBreakdown.priceItems || priceBreakdown.priceItems.length === 0) {
       throw new Error('No pricing data found');
     }
@@ -219,7 +230,10 @@ export class AirbnbScraper {
         // Base price is in nested items
         if (item.nestedPriceItems) {
           for (const nestedItem of item.nestedPriceItems) {
-            if (nestedItem.localizedTitle.includes('nights') && !nestedItem.localizedTitle.includes('service fee')) {
+            if (
+              nestedItem.localizedTitle.includes('nights') &&
+              !nestedItem.localizedTitle.includes('service fee')
+            ) {
               basePrice = this.parseAmount(nestedItem.total.amountFormatted);
             } else if (nestedItem.localizedTitle.includes('service fee')) {
               serviceFee = this.parseAmount(nestedItem.total.amountFormatted);
@@ -243,12 +257,12 @@ export class AirbnbScraper {
         cleaning: cleaningFee,
         service: serviceFee,
         taxes,
-        other: otherFees
+        other: otherFees,
       },
       totalPrice,
       currency,
       availability: true,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     };
   }
 
@@ -259,11 +273,11 @@ export class AirbnbScraper {
     // Remove currency symbols and commas, then parse
     const cleanAmount = amountString.replace(/[$,]/g, '');
     const amount = parseFloat(cleanAmount);
-    
+
     if (isNaN(amount)) {
       throw new Error(`Invalid amount format: ${amountString}`);
     }
-    
+
     return amount;
   }
 
@@ -282,7 +296,7 @@ export class AirbnbScraper {
     try {
       // Extract property ID from URL
       const propertyId = this.extractPropertyId(propertyUrl);
-      
+
       // Extract dates from URL or use provided dates
       let dates = this.extractDatesFromUrl(propertyUrl);
       if (!dates) {
@@ -308,7 +322,7 @@ export class AirbnbScraper {
         propertyId,
         checkIn: dates.checkIn,
         checkOut: dates.checkOut,
-        ...pricingData
+        ...pricingData,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -319,7 +333,7 @@ export class AirbnbScraper {
         infants,
         pets,
         checkIn,
-        checkOut
+        checkOut,
       });
     }
   }

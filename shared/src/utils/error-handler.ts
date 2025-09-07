@@ -12,7 +12,7 @@ export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 /**
@@ -26,7 +26,7 @@ export enum ErrorCategory {
   CONFIGURATION = 'configuration',
   RATE_FETCHING = 'rate_fetching',
   COMPARISON = 'comparison',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 /**
@@ -36,7 +36,7 @@ export class RateCompareError extends Error {
   public readonly code: string;
   public readonly severity: ErrorSeverity;
   public readonly category: ErrorCategory;
-  public readonly context?: Record<string, any>;
+  public readonly context?: Record<string, unknown>;
   public readonly timestamp: string;
   public readonly isOperational: boolean;
 
@@ -45,7 +45,7 @@ export class RateCompareError extends Error {
     code: string,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     category: ErrorCategory = ErrorCategory.UNKNOWN,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     isOperational: boolean = true
   ) {
     super(message);
@@ -66,7 +66,7 @@ export class RateCompareError extends Error {
   /**
    * Convert error to plain object for logging
    */
-  toJSON(): Record<string, any> {
+  toJSON(): Record<string, unknown> {
     return {
       name: this.name,
       message: this.message,
@@ -76,7 +76,7 @@ export class RateCompareError extends Error {
       context: this.context,
       timestamp: this.timestamp,
       isOperational: this.isOperational,
-      stack: this.stack
+      stack: this.stack,
     };
   }
 }
@@ -101,7 +101,7 @@ const DEFAULT_CONFIG: ErrorHandlerConfig = {
   enableRemoteLogging: false,
   logLevel: ErrorSeverity.LOW,
   maxLogEntries: 1000,
-  enableStackTrace: true
+  enableStackTrace: true,
 };
 
 /**
@@ -109,7 +109,7 @@ const DEFAULT_CONFIG: ErrorHandlerConfig = {
  */
 export class ErrorHandler {
   private config: ErrorHandlerConfig;
-  private logEntries: Array<Record<string, any>> = [];
+  private logEntries: Array<Record<string, unknown>> = [];
 
   constructor(config: Partial<ErrorHandlerConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -125,17 +125,17 @@ export class ErrorHandler {
   /**
    * Log an error
    */
-  logError(error: Error | RateCompareError, context?: Record<string, any>): void {
+  logError(error: Error | RateCompareError, context?: Record<string, unknown>): void {
     const errorData = this.prepareErrorData(error, context);
-    
+
     // Add to internal log
     this.addToLog(errorData);
-    
+
     // Console logging
     if (this.config.enableConsoleLogging) {
       this.logToConsole(errorData);
     }
-    
+
     // Remote logging
     if (this.config.enableRemoteLogging && this.config.remoteLoggingEndpoint) {
       this.logToRemote(errorData);
@@ -145,18 +145,19 @@ export class ErrorHandler {
   /**
    * Log a warning
    */
-  logWarning(message: string, context?: Record<string, any>): void {
+  logWarning(message: string, context?: Record<string, unknown>): void {
     const warningData = {
       level: 'warning',
       message,
       context,
       timestamp: new Date().toISOString(),
-      stack: this.config.enableStackTrace ? new Error().stack : undefined
+      stack: this.config.enableStackTrace ? new Error().stack : undefined,
     };
 
     this.addToLog(warningData);
-    
+
     if (this.config.enableConsoleLogging) {
+      // eslint-disable-next-line no-console
       console.warn(`[Rate Compare Warning] ${message}`, context);
     }
   }
@@ -164,17 +165,18 @@ export class ErrorHandler {
   /**
    * Log an info message
    */
-  logInfo(message: string, context?: Record<string, any>): void {
+  logInfo(message: string, context?: Record<string, unknown>): void {
     const infoData = {
       level: 'info',
       message,
       context,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     this.addToLog(infoData);
-    
+
     if (this.config.enableConsoleLogging) {
+      // eslint-disable-next-line no-console
       console.info(`[Rate Compare Info] ${message}`, context);
     }
   }
@@ -182,17 +184,18 @@ export class ErrorHandler {
   /**
    * Log a debug message
    */
-  logDebug(message: string, context?: Record<string, any>): void {
+  logDebug(message: string, context?: Record<string, unknown>): void {
     const debugData = {
       level: 'debug',
       message,
       context,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     this.addToLog(debugData);
-    
+
     if (this.config.enableConsoleLogging && process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.debug(`[Rate Compare Debug] ${message}`, context);
     }
   }
@@ -200,7 +203,7 @@ export class ErrorHandler {
   /**
    * Get all log entries
    */
-  getLogs(): Array<Record<string, any>> {
+  getLogs(): Array<Record<string, unknown>> {
     return [...this.logEntries];
   }
 
@@ -214,24 +217,27 @@ export class ErrorHandler {
   /**
    * Get logs by severity
    */
-  getLogsBySeverity(severity: ErrorSeverity): Array<Record<string, any>> {
+  getLogsBySeverity(severity: ErrorSeverity): Array<Record<string, unknown>> {
     return this.logEntries.filter(entry => entry.severity === severity);
   }
 
   /**
    * Get logs by category
    */
-  getLogsByCategory(category: ErrorCategory): Array<Record<string, any>> {
+  getLogsByCategory(category: ErrorCategory): Array<Record<string, unknown>> {
     return this.logEntries.filter(entry => entry.category === category);
   }
 
   /**
    * Prepare error data for logging
    */
-  private prepareErrorData(error: Error | RateCompareError, context?: Record<string, any>): Record<string, any> {
+  private prepareErrorData(
+    error: Error | RateCompareError,
+    context?: Record<string, unknown>
+  ): Record<string, unknown> {
     const baseData = {
       timestamp: new Date().toISOString(),
-      stack: this.config.enableStackTrace ? error.stack : undefined
+      stack: this.config.enableStackTrace ? error.stack : undefined,
     };
 
     if (error instanceof RateCompareError) {
@@ -244,7 +250,7 @@ export class ErrorHandler {
         severity: error.severity,
         category: error.category,
         context: { ...error.context, ...context },
-        isOperational: error.isOperational
+        isOperational: error.isOperational,
       };
     }
 
@@ -257,16 +263,16 @@ export class ErrorHandler {
       severity: ErrorSeverity.MEDIUM,
       category: ErrorCategory.UNKNOWN,
       context,
-      isOperational: false
+      isOperational: false,
     };
   }
 
   /**
    * Add entry to internal log
    */
-  private addToLog(data: Record<string, any>): void {
+  private addToLog(data: Record<string, unknown>): void {
     this.logEntries.push(data);
-    
+
     // Maintain max log entries
     if (this.logEntries.length > this.config.maxLogEntries) {
       this.logEntries = this.logEntries.slice(-this.config.maxLogEntries);
@@ -276,26 +282,31 @@ export class ErrorHandler {
   /**
    * Log to console
    */
-  private logToConsole(data: Record<string, any>): void {
+  private logToConsole(data: Record<string, unknown>): void {
     const { level, message, severity, category, context, stack } = data;
-    
+
     const logMessage = `[Rate Compare ${level.toUpperCase()}] ${message}`;
     const logData = { severity, category, context, stack };
 
     switch (level) {
       case 'error':
+        // eslint-disable-next-line no-console
         console.error(logMessage, logData);
         break;
       case 'warning':
+        // eslint-disable-next-line no-console
         console.warn(logMessage, logData);
         break;
       case 'info':
+        // eslint-disable-next-line no-console
         console.info(logMessage, logData);
         break;
       case 'debug':
+        // eslint-disable-next-line no-console
         console.debug(logMessage, logData);
         break;
       default:
+        // eslint-disable-next-line no-console
         console.log(logMessage, logData);
     }
   }
@@ -303,7 +314,7 @@ export class ErrorHandler {
   /**
    * Log to remote endpoint
    */
-  private async logToRemote(data: Record<string, any>): Promise<void> {
+  private async logToRemote(data: Record<string, unknown>): Promise<void> {
     if (!this.config.remoteLoggingEndpoint) {
       return;
     }
@@ -314,10 +325,11 @@ export class ErrorHandler {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
     } catch (error) {
       // Don't log remote logging errors to avoid infinite loops
+      // eslint-disable-next-line no-console
       console.warn('[Rate Compare] Failed to log to remote endpoint:', error);
     }
   }
@@ -335,7 +347,10 @@ export const errorHandler = new ErrorHandler();
 /**
  * Create a validation error
  */
-export function createValidationError(message: string, context?: Record<string, any>): RateCompareError {
+export function createValidationError(
+  message: string,
+  context?: Record<string, unknown>
+): RateCompareError {
   return new RateCompareError(
     message,
     'VALIDATION_ERROR',
@@ -348,7 +363,10 @@ export function createValidationError(message: string, context?: Record<string, 
 /**
  * Create a network error
  */
-export function createNetworkError(message: string, context?: Record<string, any>): RateCompareError {
+export function createNetworkError(
+  message: string,
+  context?: Record<string, unknown>
+): RateCompareError {
   return new RateCompareError(
     message,
     'NETWORK_ERROR',
@@ -361,20 +379,20 @@ export function createNetworkError(message: string, context?: Record<string, any
 /**
  * Create an API error
  */
-export function createAPIError(message: string, context?: Record<string, any>): RateCompareError {
-  return new RateCompareError(
-    message,
-    'API_ERROR',
-    ErrorSeverity.HIGH,
-    ErrorCategory.API,
-    context
-  );
+export function createAPIError(
+  message: string,
+  context?: Record<string, unknown>
+): RateCompareError {
+  return new RateCompareError(message, 'API_ERROR', ErrorSeverity.HIGH, ErrorCategory.API, context);
 }
 
 /**
  * Create a configuration error
  */
-export function createConfigurationError(message: string, context?: Record<string, any>): RateCompareError {
+export function createConfigurationError(
+  message: string,
+  context?: Record<string, unknown>
+): RateCompareError {
   return new RateCompareError(
     message,
     'CONFIGURATION_ERROR',
@@ -387,7 +405,10 @@ export function createConfigurationError(message: string, context?: Record<strin
 /**
  * Create a rate fetching error
  */
-export function createRateFetchingError(message: string, context?: Record<string, any>): RateCompareError {
+export function createRateFetchingError(
+  message: string,
+  context?: Record<string, unknown>
+): RateCompareError {
   return new RateCompareError(
     message,
     'RATE_FETCHING_ERROR',
@@ -400,7 +421,11 @@ export function createRateFetchingError(message: string, context?: Record<string
 /**
  * Handle promise rejections
  */
-export function handlePromiseRejection(error: any, context?: Record<string, any>, handler: ErrorHandler = errorHandler): void {
+export function handlePromiseRejection(
+  error: unknown,
+  context?: Record<string, unknown>,
+  handler: ErrorHandler = errorHandler
+): void {
   if (error instanceof RateCompareError) {
     handler.logError(error, context);
   } else {
@@ -411,9 +436,9 @@ export function handlePromiseRejection(error: any, context?: Record<string, any>
 /**
  * Wrap async function with error handling
  */
-export function withErrorHandling<T extends any[], R>(
+export function withErrorHandling<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
-  context?: Record<string, any>,
+  context?: Record<string, unknown>,
   handler: ErrorHandler = errorHandler
 ): (...args: T) => Promise<R | null> {
   return async (...args: T): Promise<R | null> => {
@@ -429,9 +454,9 @@ export function withErrorHandling<T extends any[], R>(
 /**
  * Wrap sync function with error handling
  */
-export function withSyncErrorHandling<T extends any[], R>(
+export function withSyncErrorHandling<T extends unknown[], R>(
   fn: (...args: T) => R,
-  context?: Record<string, any>,
+  context?: Record<string, unknown>,
   handler: ErrorHandler = errorHandler
 ): (...args: T) => R | null {
   return (...args: T): R | null => {

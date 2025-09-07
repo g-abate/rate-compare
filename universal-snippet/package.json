@@ -35,7 +35,7 @@
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
-    "@vitest/coverage-v8": "^2.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.4",
@@ -44,7 +44,7 @@
     "rollup-plugin-dts": "^6.0.0",
     "tslib": "^2.6.0",
     "typescript": "^5.0.0",
-    "vitest": "^2.0.0"
+    "vitest": "^3.2.4"
   },
   "eslintConfig": {
     "root": true,
@@ -62,10 +62,18 @@
       "ecmaVersion": 2020,
       "sourceType": "module"
     },
-    "plugins": ["@typescript-eslint", "prettier"],
+    "plugins": [
+      "@typescript-eslint",
+      "prettier"
+    ],
     "rules": {
       "prettier/prettier": "error",
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_"
+        }
+      ],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/explicit-module-boundary-types": "off",
@@ -75,7 +83,10 @@
     },
     "overrides": [
       {
-        "files": ["**/*.test.{js,ts}", "**/*.spec.{js,ts}"],
+        "files": [
+          "**/*.test.{js,ts}",
+          "**/*.spec.{js,ts}"
+        ],
         "env": {
           "jest": true
         },

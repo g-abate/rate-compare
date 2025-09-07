@@ -5,14 +5,22 @@
  * @since 1.0.0
  */
 
-import { errorHandler, createNetworkError, createRateFetchingError } from '../utils/error-handler';
+import { errorHandler, createRateFetchingError } from '../utils/error-handler';
+
+// Type definitions for fetch API
+interface RequestInit {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: string;
+  signal?: AbortSignal;
+}
 
 /**
  * Scraping methods
  */
 export enum ScrapingMethod {
   SERVER_SIDE = 'server_side',
-  CLIENT_SIDE = 'client_side'
+  CLIENT_SIDE = 'client_side',
 }
 
 /**
@@ -74,7 +82,7 @@ export interface ScrapingError {
   message: string;
   url?: string;
   selector?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 /**
@@ -115,20 +123,20 @@ const DEFAULT_CONFIG: ScrapingConfig = {
   retryConfig: {
     maxRetries: 3,
     retryDelay: 1000,
-    backoffMultiplier: 2
+    backoffMultiplier: 2,
   },
   rateLimitConfig: {
     requestsPerMinute: 30,
-    burstLimit: 5
+    burstLimit: 5,
   },
   userAgent: 'RateCompare/1.0.0 (Web Scraper)',
   headers: {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.5',
     'Accept-Encoding': 'gzip, deflate',
-    'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1'
-  }
+    Connection: 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+  },
 };
 
 /**
@@ -153,7 +161,7 @@ class RateLimiter {
     if (this.requests.length >= this.config.requestsPerMinute) {
       const oldestRequest = Math.min(...this.requests);
       const waitTime = oldestRequest + 60000 - now;
-      
+
       if (waitTime > 0) {
         await new Promise(resolve => setTimeout(resolve, waitTime));
         return this.waitIfNeeded();
@@ -181,7 +189,10 @@ export class WebScraper {
 
   constructor(config: Partial<ScrapingConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
-    this.rateLimiter = new RateLimiter(this.config.rateLimitConfig!);
+    if (!this.config.rateLimitConfig) {
+      throw new Error('Rate limit configuration is required');
+    }
+    this.rateLimiter = new RateLimiter(this.config.rateLimitConfig);
   }
 
   /**
@@ -189,7 +200,10 @@ export class WebScraper {
    */
   updateConfig(newConfig: Partial<ScrapingConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    this.rateLimiter = new RateLimiter(this.config.rateLimitConfig!);
+    if (!this.config.rateLimitConfig) {
+      throw new Error('Rate limit configuration is required');
+    }
+    this.rateLimiter = new RateLimiter(this.config.rateLimitConfig);
   }
 
   /**
@@ -211,7 +225,7 @@ export class WebScraper {
             return await this.scrapeClientSide(request);
           }
         },
-        this.config.retryConfig!
+        this.config.retryConfig || { maxRetries: 3, retryDelay: 1000, backoffMultiplier: 2 }
       );
 
       const result = await retryFunction();
@@ -219,16 +233,16 @@ export class WebScraper {
       return {
         ...result,
         url: request.url,
-        timestamp
+        timestamp,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown scraping error';
-      
+
       errorHandler.logError(
         createRateFetchingError('Scraping failed', {
           url: request.url,
           method: request.method,
-          error: errorMessage
+          error: errorMessage,
         })
       );
 
@@ -236,7 +250,7 @@ export class WebScraper {
         success: false,
         error: errorMessage,
         url: request.url,
-        timestamp
+        timestamp,
       };
     }
   }
@@ -250,7 +264,7 @@ export class WebScraper {
   ): Promise<ScrapingResult[]> {
     const requests = urls.map(url => ({
       ...commonConfig,
-      url
+      url,
     }));
 
     // Process requests with concurrency limit
@@ -259,9 +273,7 @@ export class WebScraper {
 
     for (let i = 0; i < requests.length; i += concurrency) {
       const batch = requests.slice(i, i + concurrency);
-      const batchResults = await Promise.all(
-        batch.map(request => this.scrapeRates(request))
-      );
+      const batchResults = await Promise.all(batch.map(request => this.scrapeRates(request)));
       results.push(...batchResults);
     }
 
@@ -273,20 +285,20 @@ export class WebScraper {
    */
   private async scrapeServerSide(request: ScrapingRequest): Promise<ScrapingResult> {
     const proxyUrl = `${this.config.baseURL}/scrape`;
-    
+
     const response = await this.makeRequest(proxyUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': this.config.userAgent!,
+        'User-Agent': this.config.userAgent || 'RateCompare/1.0.0',
         ...this.config.headers,
-        ...request.headers
+        ...request.headers,
       },
       body: JSON.stringify({
         url: request.url,
         selectors: request.selectors,
-        timeout: request.timeout || this.config.timeout
-      })
+        timeout: request.timeout || this.config.timeout,
+      }),
     });
 
     if (!response.success) {
@@ -295,11 +307,11 @@ export class WebScraper {
 
     try {
       const data = this.extractRateData(response.data, request.selectors);
-      
+
       if (!data) {
         return {
           success: false,
-          error: 'Failed to extract rate data from response'
+          error: 'Failed to extract rate data from response',
         };
       }
 
@@ -307,15 +319,16 @@ export class WebScraper {
         success: true,
         data,
         url: request.url,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to extract rate data from response';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to extract rate data from response';
       return {
         success: false,
         error: errorMessage,
         url: request.url,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }
@@ -333,7 +346,7 @@ export class WebScraper {
       // Navigate to the URL (this would be handled by the browser)
       // For testing purposes, we'll simulate DOM access
       const data = this.extractRateDataFromDOM(request.selectors);
-      
+
       if (!data) {
         throw new Error('Failed to extract rate data from DOM');
       }
@@ -342,7 +355,7 @@ export class WebScraper {
         success: true,
         data,
         url: request.url,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Client-side scraping failed';
@@ -350,7 +363,7 @@ export class WebScraper {
         success: false,
         error: errorMessage,
         url: request.url,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }
@@ -364,7 +377,7 @@ export class WebScraper {
       const data: Partial<ScrapedRateData> = {
         currency: 'USD',
         availability: true,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
 
       // Extract base price
@@ -397,11 +410,12 @@ export class WebScraper {
 
       // Calculate total if not provided
       if (!data.totalPrice) {
-        data.totalPrice = (data.basePrice || 0) + 
-                         (data.cleaningFee || 0) + 
-                         (data.serviceFee || 0) + 
-                         (data.taxes || 0) + 
-                         (data.otherFees || 0);
+        data.totalPrice =
+          (data.basePrice || 0) +
+          (data.cleaningFee || 0) +
+          (data.serviceFee || 0) +
+          (data.taxes || 0) +
+          (data.otherFees || 0);
       }
 
       // Extract currency
@@ -423,7 +437,7 @@ export class WebScraper {
       errorHandler.logError(
         createRateFetchingError('Data extraction failed', {
           error: error instanceof Error ? error.message : 'Unknown error',
-          selectors
+          selectors,
         })
       );
       throw error; // Re-throw the error so it can be caught by the calling method
@@ -438,7 +452,7 @@ export class WebScraper {
       const data: Partial<ScrapedRateData> = {
         currency: 'USD',
         availability: true,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
 
       // Extract base price
@@ -476,11 +490,12 @@ export class WebScraper {
 
       // Calculate total if not provided
       if (!data.totalPrice) {
-        data.totalPrice = (data.basePrice || 0) + 
-                         (data.cleaningFee || 0) + 
-                         (data.serviceFee || 0) + 
-                         (data.taxes || 0) + 
-                         (data.otherFees || 0);
+        data.totalPrice =
+          (data.basePrice || 0) +
+          (data.cleaningFee || 0) +
+          (data.serviceFee || 0) +
+          (data.taxes || 0) +
+          (data.otherFees || 0);
       }
 
       // Extract currency
@@ -502,7 +517,7 @@ export class WebScraper {
       errorHandler.logError(
         createRateFetchingError('DOM extraction failed', {
           error: error instanceof Error ? error.message : 'Unknown error',
-          selectors
+          selectors,
         })
       );
       throw error; // Re-throw the error so it can be caught by the calling method
@@ -523,7 +538,7 @@ export class WebScraper {
   private extractTextFromSelector(html: string, selector: string): string | null {
     // This is a simplified implementation
     // In a real implementation, you'd use a proper HTML parser like jsdom or cheerio
-    
+
     // Handle different selector types
     if (selector.startsWith('.')) {
       const className = selector.substring(1);
@@ -531,9 +546,9 @@ export class WebScraper {
       const patterns = [
         new RegExp(`<[^>]*class="[^"]*${className}[^"]*"[^>]*>([^<]*)</[^>]*>`, 'i'),
         new RegExp(`<[^>]*class="[^"]*${className}[^"]*"[^>]*>([^<]*?)</[^>]*>`, 'i'),
-        new RegExp(`<[^>]*class="[^"]*${className}[^"]*"[^>]*>([^<]*?)</[^>]*>`, 'gis')
+        new RegExp(`<[^>]*class="[^"]*${className}[^"]*"[^>]*>([^<]*?)</[^>]*>`, 'gis'),
       ];
-      
+
       for (const pattern of patterns) {
         const match = html.match(pattern);
         if (match && match[1]) {
@@ -570,14 +585,14 @@ export class WebScraper {
   private normalizeCurrency(currency: string): string {
     const normalized = currency.toUpperCase().trim();
     const currencyMap: Record<string, string> = {
-      '$': 'USD',
+      $: 'USD',
       '€': 'EUR',
       '£': 'GBP',
       '¥': 'JPY',
-      'USD': 'USD',
-      'EUR': 'EUR',
-      'GBP': 'GBP',
-      'JPY': 'JPY'
+      USD: 'USD',
+      EUR: 'EUR',
+      GBP: 'GBP',
+      JPY: 'JPY',
     };
     return currencyMap[normalized] || 'USD';
   }
@@ -588,27 +603,30 @@ export class WebScraper {
   private parseAvailability(text: string): boolean {
     const availableKeywords = ['available', 'book now', 'instant book', 'yes'];
     const unavailableKeywords = ['unavailable', 'booked', 'no', 'sold out'];
-    
+
     const lowerText = text.toLowerCase();
-    
+
     if (unavailableKeywords.some(keyword => lowerText.includes(keyword))) {
       return false;
     }
-    
+
     return availableKeywords.some(keyword => lowerText.includes(keyword)) || true;
   }
 
   /**
    * Make HTTP request with timeout and retry logic
    */
-  private async makeRequest(url: string, options: RequestInit): Promise<{ success: boolean; data?: any; error?: string }> {
+  private async makeRequest(
+    url: string,
+    options: RequestInit
+  ): Promise<{ success: boolean; data?: unknown; error?: string }> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
     try {
       const response = await fetch(url, {
         ...options,
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -616,34 +634,34 @@ export class WebScraper {
       if (!response.ok) {
         return {
           success: false,
-          error: `HTTP ${response.status}: ${response.statusText}`
+          error: `HTTP ${response.status}: ${response.statusText}`,
         };
       }
 
       const data = await response.text();
       return {
         success: true,
-        data
+        data,
       };
     } catch (error) {
       clearTimeout(timeoutId);
-      
+
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           return {
             success: false,
-            error: 'Request timeout'
+            error: 'Request timeout',
           };
         }
         return {
           success: false,
-          error: error.message
+          error: error.message,
         };
       }
-      
+
       return {
         success: false,
-        error: 'Unknown request error'
+        error: 'Unknown request error',
       };
     }
   }
@@ -652,41 +670,41 @@ export class WebScraper {
 /**
  * Retry wrapper for functions
  */
-export function withRetry<T extends any[], R>(
+export function withRetry<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   config: RetryConfig
 ): (...args: T) => Promise<R> {
   return async (...args: T): Promise<R> => {
     let lastError: Error;
-    
+
     for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
       try {
         return await fn(...args);
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
-        
+
         if (attempt === config.maxRetries) {
           throw lastError;
         }
-        
+
         const delay = config.retryDelay * Math.pow(config.backoffMultiplier, attempt);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-    
-    throw lastError!;
+
+    throw lastError || new Error('Unknown error occurred during retry');
   };
 }
 
 /**
  * Rate limit wrapper for functions
  */
-export function withRateLimit<T extends any[], R>(
+export function withRateLimit<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   config: RateLimitConfig
 ): (...args: T) => Promise<R> {
   const rateLimiter = new RateLimiter(config);
-  
+
   return async (...args: T): Promise<R> => {
     await rateLimiter.waitIfNeeded();
     return await fn(...args);
@@ -713,7 +731,7 @@ export const PLATFORM_SELECTORS: Record<string, ScrapingSelectors> = {
     taxes: '[data-testid="taxes"] span, ._1y74zjx span:contains("tax")',
     totalPrice: '[data-testid="total-price"] span, ._1y74zjx span:contains("total")',
     availability: '[data-testid="availability"] span, ._1y74zjx span:contains("available")',
-    currency: '[data-testid="currency"] span, ._1y74zjx span[class*="currency"]'
+    currency: '[data-testid="currency"] span, ._1y74zjx span[class*="currency"]',
   },
   vrbo: {
     basePrice: '.nightly-rate, .price-per-night, [data-testid="nightly-rate"]',
@@ -722,7 +740,7 @@ export const PLATFORM_SELECTORS: Record<string, ScrapingSelectors> = {
     fees: '.fees, .additional-fees, [data-testid="fees"]',
     totalPrice: '.total-price, .total-amount, [data-testid="total-price"]',
     availability: '.availability, .available-dates, [data-testid="availability"]',
-    currency: '.currency, .price-currency, [data-testid="currency"]'
+    currency: '.currency, .price-currency, [data-testid="currency"]',
   },
   booking: {
     basePrice: '.bui-price-display__value, .prco-valign-middle-helper, [data-testid="price"]',
@@ -730,7 +748,7 @@ export const PLATFORM_SELECTORS: Record<string, ScrapingSelectors> = {
     fees: '.fees, .additional-fees, [data-testid="fees"]',
     totalPrice: '.total-price, .total-amount, [data-testid="total-price"]',
     availability: '.availability, .available-dates, [data-testid="availability"]',
-    currency: '.currency, .price-currency, [data-testid="currency"]'
+    currency: '.currency, .price-currency, [data-testid="currency"]',
   },
   expedia: {
     basePrice: '.uitk-price-display, .price-display, [data-testid="price"]',
@@ -738,6 +756,6 @@ export const PLATFORM_SELECTORS: Record<string, ScrapingSelectors> = {
     fees: '.fees, .additional-fees, [data-testid="fees"]',
     totalPrice: '.total-price, .total-amount, [data-testid="total-price"]',
     availability: '.availability, .available-dates, [data-testid="availability"]',
-    currency: '.currency, .price-currency, [data-testid="currency"]'
-  }
+    currency: '.currency, .price-currency, [data-testid="currency"]',
+  },
 };
