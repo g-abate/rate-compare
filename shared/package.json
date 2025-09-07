@@ -30,7 +30,7 @@
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "@vitest/coverage-v8": "^2.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.4",
@@ -38,8 +38,8 @@
     "prettier": "^3.6.2",
     "rollup": "^4.0.0",
     "rollup-plugin-dts": "^6.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^2.0.0"
+    "typescript": "^5.5.0",
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
     "typescript": ">=5.0.0"

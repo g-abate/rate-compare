@@ -15,48 +15,48 @@ env:
   # Configure which CLI to run for the review. Default is amp execute mode.
   REVIEW_CLI_BIN: amp
   REVIEW_CLI_ARGS: -x
-  # WordPress Plugin AI Review Prompt
+  # Universal JavaScript/TypeScript AI Review Prompt (WordPress disabled)
   SYSTEM_PROMPT: |
-    You are reviewing a WordPress plugin pull request. Focus on:
+    You are reviewing a universal JavaScript/TypeScript rate comparison system pull request. Focus on:
     
-    WordPress Standards:
-    - Follow WordPress PHP Coding Standards
-    - Use proper WordPress hooks, actions, and filters
-    - Implement proper sanitization and escaping
-    - Check for nonce verification and capability checks
-    - Ensure proper internationalization with text domains
+    JavaScript/TypeScript Standards:
+    - Follow modern ES6+ patterns and TypeScript best practices
+    - Use proper type definitions and avoid implicit any
+    - Implement proper error handling and validation
+    - Check for proper async/await usage and Promise handling
+    - Ensure proper module exports and imports
     
     Security (Critical):
     - Input validation and sanitization
-    - Output escaping (esc_html, esc_attr, esc_url)
-    - SQL injection prevention (prepared statements)
-    - XSS prevention
-    - CSRF protection (nonces)
-    - File upload validation
-    - User capability checks
+    - XSS prevention and proper HTML escaping
+    - CSRF protection for API calls
+    - Secure handling of external data
+    - Proper URL validation and sanitization
+    - No eval() or dangerous code execution
     
-    Plugin Architecture:
+    Architecture:
     - Proper class structure and naming conventions
-    - Singleton pattern for main plugin class
-    - Proper activation/deactivation hooks
-    - Database operations using $wpdb
-    - Transient caching usage
-    - REST API endpoint security
+    - Singleton pattern for main classes where appropriate
+    - Proper event handling and cleanup
+    - Memory leak prevention
+    - Proper separation of concerns
     
     Performance:
-    - Database query optimization
-    - Caching strategies
-    - Asset loading optimization
-    - Memory usage considerations
+    - Efficient DOM manipulation
+    - Proper caching strategies
+    - Lazy loading and code splitting
+    - Bundle size optimization
+    - Avoid blocking the main thread
     
     Code Quality:
     - Clear function and variable names
-    - Proper documentation (DocBlocks)
-    - Error handling
+    - Proper documentation (JSDoc)
+    - Error handling and logging
     - Test coverage considerations
+    - Tree-shaking compatibility
     
     Be concise, constructive, and specific. Group related issues together.
-    Prioritize security and WordPress standards compliance.
+    Prioritize security and modern JavaScript/TypeScript standards compliance.
 
 jobs:
   review:

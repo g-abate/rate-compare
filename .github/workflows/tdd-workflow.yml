@@ -131,12 +131,6 @@ jobs:
         node-version: 20
         cache: 'npm'
         
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: 8.1
-        extensions: mbstring, dom, fileinfo, libxml, mysql, zip
-        
     - name: Install dependencies
       run: npm ci
       
@@ -145,17 +139,24 @@ jobs:
       
     - name: Run TypeScript checks
       run: npm run typecheck
-      
-    - name: Run PHP CodeSniffer
-      run: |
-        cd wordpress-plugin
-        composer install --no-interaction
-        composer cs
-        
-    - name: Run PHPStan
-      run: |
-        cd wordpress-plugin
-        composer stan
+    
+    # WordPress testing disabled - not building WordPress functionality yet
+    # - name: Setup PHP
+    #   uses: shivammathur/setup-php@v2
+    #   with:
+    #     php-version: 8.1
+    #     extensions: mbstring, dom, fileinfo, libxml, mysql, zip
+    #     
+    # - name: Run PHP CodeSniffer
+    #   run: |
+    #     cd wordpress-plugin
+    #     composer install --no-interaction
+    #     composer cs
+    #     
+    # - name: Run PHPStan
+    #   run: |
+    #     cd wordpress-plugin
+    #     composer stan
 
   tdd-summary:
     name: TDD Process Summary
