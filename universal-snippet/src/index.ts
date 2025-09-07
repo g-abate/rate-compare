@@ -9,7 +9,14 @@
 export { RateComparisonSnippet } from './components/rate-comparison-snippet';
 
 // Export types
-export type { RateComparisonConfig, EventType, EventHandler } from './components/rate-comparison-snippet';
+export type { 
+  RateComparisonConfig, 
+  EventType, 
+  EventHandler,
+  SupportedChannel,
+  DisplayMode,
+  Theme
+} from './components/rate-comparison-snippet';
 
 // Legacy function for backward compatibility
 export function initRateComparison(): void {
