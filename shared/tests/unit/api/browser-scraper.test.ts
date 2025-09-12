@@ -35,7 +35,6 @@ describe('BrowserAirbnbScraper', () => {
       setExtraHTTPHeaders: vi.fn(),
       evaluateOnNewDocument: vi.fn(),
       goto: vi.fn(),
-      waitForTimeout: vi.fn(),
       click: vi.fn(),
       waitForSelector: vi.fn(),
       evaluate: vi.fn(),
@@ -153,7 +152,6 @@ describe('BrowserAirbnbScraper', () => {
 
     it('should navigate to property page successfully', async () => {
       (mockPage.goto as Mock).mockResolvedValue(undefined);
-      (mockPage.waitForTimeout as Mock).mockResolvedValue(undefined);
 
       await (scraper as any).navigateToProperty(mockOptions);
 
@@ -161,12 +159,10 @@ describe('BrowserAirbnbScraper', () => {
         waitUntil: 'networkidle2',
         timeout: 10000,
       });
-      expect(mockPage.waitForTimeout).toHaveBeenCalledWith(2000);
     });
 
     it('should attempt to set check-in date', async () => {
       (mockPage.goto as Mock).mockResolvedValue(undefined);
-      (mockPage.waitForTimeout as Mock).mockResolvedValue(undefined);
       (mockPage.click as Mock).mockResolvedValue(undefined);
       (mockPage.waitForSelector as Mock).mockResolvedValue({});
 
@@ -181,7 +177,6 @@ describe('BrowserAirbnbScraper', () => {
 
     it('should attempt to set check-out date', async () => {
       (mockPage.goto as Mock).mockResolvedValue(undefined);
-      (mockPage.waitForTimeout as Mock).mockResolvedValue(undefined);
       (mockPage.click as Mock).mockResolvedValue(undefined);
       (mockPage.waitForSelector as Mock).mockResolvedValue({});
 
@@ -196,7 +191,6 @@ describe('BrowserAirbnbScraper', () => {
 
     it('should attempt to click Reserve button', async () => {
       (mockPage.goto as Mock).mockResolvedValue(undefined);
-      (mockPage.waitForTimeout as Mock).mockResolvedValue(undefined);
       (mockPage.click as Mock).mockResolvedValue(undefined);
       (mockPage.waitForSelector as Mock).mockResolvedValue({});
 
@@ -301,7 +295,6 @@ describe('BrowserAirbnbScraper', () => {
 
       // Mock all the methods
       (mockPage.goto as Mock).mockResolvedValue(undefined);
-      (mockPage.waitForTimeout as Mock).mockResolvedValue(undefined);
       (mockPage.click as Mock).mockResolvedValue(undefined);
       (mockPage.waitForSelector as Mock).mockResolvedValue({});
       (mockPage.evaluate as Mock).mockResolvedValue(mockPricingData);
@@ -355,7 +348,6 @@ describe('BrowserAirbnbScraper', () => {
       };
 
       (mockPage.goto as Mock).mockResolvedValue(undefined);
-      (mockPage.waitForTimeout as Mock).mockResolvedValue(undefined);
       (mockPage.click as Mock).mockResolvedValue(undefined);
       (mockPage.waitForSelector as Mock).mockResolvedValue({});
       (mockPage.evaluate as Mock).mockResolvedValue(mockPricingData);
@@ -392,7 +384,6 @@ describe('BrowserAirbnbScraper', () => {
 
       // Mock all the methods
       (mockPage.goto as Mock).mockResolvedValue(undefined);
-      (mockPage.waitForTimeout as Mock).mockResolvedValue(undefined);
       (mockPage.click as Mock).mockResolvedValue(undefined);
       (mockPage.waitForSelector as Mock).mockResolvedValue({});
       (mockPage.evaluate as Mock).mockResolvedValue(mockPricingData);

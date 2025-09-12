@@ -171,19 +171,25 @@ export class BrowserAirbnbScraper {
     });
 
     // Wait for the page to load
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    if (process.env.NODE_ENV !== 'test') {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
 
     // Try to set check-in date
     try {
       console.log(`📅 Setting check-in date: ${options.checkIn}`);
       await this.page.click('[data-testid="date-picker-checkin"]');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (process.env.NODE_ENV !== 'test') {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
       // Click on the specific date
       const checkInSelector = `[data-testid="date-picker-day-${options.checkIn}"]`;
       await this.page.waitForSelector(checkInSelector, { timeout: 5000 });
       await this.page.click(checkInSelector);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (process.env.NODE_ENV !== 'test') {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     } catch (error) {
       console.log('⚠️ Could not set check-in date, continuing...');
     }
@@ -192,13 +198,17 @@ export class BrowserAirbnbScraper {
     try {
       console.log(`📅 Setting check-out date: ${options.checkOut}`);
       await this.page.click('[data-testid="date-picker-checkout"]');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (process.env.NODE_ENV !== 'test') {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
       // Click on the specific date
       const checkOutSelector = `[data-testid="date-picker-day-${options.checkOut}"]`;
       await this.page.waitForSelector(checkOutSelector, { timeout: 5000 });
       await this.page.click(checkOutSelector);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (process.env.NODE_ENV !== 'test') {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     } catch (error) {
       console.log('⚠️ Could not set check-out date, continuing...');
     }
@@ -212,7 +222,9 @@ export class BrowserAirbnbScraper {
       if (reserveButton) {
         await reserveButton.click();
         console.log('✅ Clicked Reserve button');
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        if (process.env.NODE_ENV !== 'test') {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
       }
     } catch (error) {
       console.log('⚠️ Could not find Reserve button, continuing with property page...');
