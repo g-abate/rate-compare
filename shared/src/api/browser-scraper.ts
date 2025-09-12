@@ -122,7 +122,7 @@ export class BrowserAirbnbScraper {
     // Add some random delays to appear more human-like
     await this.page.evaluateOnNewDocument(() => {
       const originalQuery = window.navigator.permissions.query;
-      window.navigator.permissions.query = (parameters: PermissionDescriptor) =>
+      window.navigator.permissions.query = (parameters: any) =>
         parameters.name === 'notifications'
           ? Promise.resolve({ state: Notification.permission } as PermissionStatus)
           : originalQuery(parameters);

@@ -93,6 +93,17 @@
           "@typescript-eslint/no-explicit-any": "off",
           "no-console": "off"
         }
+      },
+      {
+        "files": [
+          "**/browser-scraper.ts",
+          "**/airbnb-scraper.ts"
+        ],
+        "rules": {
+          "no-console": "off",
+          "@typescript-eslint/no-non-null-assertion": "off",
+          "@typescript-eslint/no-explicit-any": "off"
+        }
       }
     ],
     "ignorePatterns": [
