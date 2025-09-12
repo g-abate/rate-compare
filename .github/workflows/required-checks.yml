@@ -3,6 +3,7 @@ name: Required Checks
 on:
   pull_request:
     types: [opened, synchronize]
+  workflow_dispatch:
 
 jobs:
   required-checks:
@@ -10,8 +11,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Check PHP syntax
-      run: find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \;
+    - name: Check PHP syntax (if PHP files exist)
+      run: |
+        if find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" | grep -q .; then
+          find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \;
+        else
+          echo "No PHP files found, skipping PHP syntax check"
+        fi
     
     - name: Check for security issues
       run: |

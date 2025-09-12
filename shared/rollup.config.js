@@ -3,6 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
 import dts from 'rollup-plugin-dts';
+import json from '@rollup/plugin-json';
 import { readFileSync } from 'fs';
 
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'));
@@ -24,6 +25,7 @@ export default [
       },
     ],
     plugins: [
+      json(),
       resolve({
         browser: true,
       }),
@@ -34,7 +36,7 @@ export default [
         declarationDir: './dist',
       }),
     ],
-    external: ['date-fns'],
+    external: ['date-fns', 'puppeteer', 'puppeteer-core'],
   },
   // UMD build
   {
@@ -46,6 +48,7 @@ export default [
       sourcemap: true,
     },
     plugins: [
+      json(),
       resolve({
         browser: true,
       }),
@@ -56,6 +59,7 @@ export default [
       }),
       terser(),
     ],
+    external: ['puppeteer', 'puppeteer-core'],
   },
   // Minified UMD build
   {
@@ -67,6 +71,7 @@ export default [
       sourcemap: true,
     },
     plugins: [
+      json(),
       resolve({
         browser: true,
       }),
@@ -81,6 +86,7 @@ export default [
         },
       }),
     ],
+    external: ['puppeteer', 'puppeteer-core'],
   },
   // Type definitions
   {
