@@ -122,10 +122,10 @@ export class BrowserAirbnbScraper {
     // Add some random delays to appear more human-like
     await this.page.evaluateOnNewDocument(() => {
       const originalQuery = window.navigator.permissions.query;
-      return (window.navigator.permissions.query = (parameters: any) =>
+      window.navigator.permissions.query = (parameters: PermissionDescriptor) =>
         parameters.name === 'notifications'
-          ? Promise.resolve({ state: Notification.permission })
-          : originalQuery(parameters));
+          ? Promise.resolve({ state: Notification.permission } as PermissionStatus)
+          : originalQuery(parameters);
     });
 
     console.log('✅ Browser initialized successfully');
@@ -151,7 +151,7 @@ export class BrowserAirbnbScraper {
    */
   private extractPropertyId(url: string): string {
     const match = url.match(/\/rooms\/(\d+)/);
-    return match ? match[1] : '';
+    return match ? match[1]! : '';
   }
 
   /**
@@ -171,19 +171,19 @@ export class BrowserAirbnbScraper {
     });
 
     // Wait for the page to load
-    await this.page.waitForTimeout(2000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Try to set check-in date
     try {
       console.log(`📅 Setting check-in date: ${options.checkIn}`);
       await this.page.click('[data-testid="date-picker-checkin"]');
-      await this.page.waitForTimeout(1000);
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Click on the specific date
       const checkInSelector = `[data-testid="date-picker-day-${options.checkIn}"]`;
       await this.page.waitForSelector(checkInSelector, { timeout: 5000 });
       await this.page.click(checkInSelector);
-      await this.page.waitForTimeout(1000);
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
       console.log('⚠️ Could not set check-in date, continuing...');
     }
@@ -192,13 +192,13 @@ export class BrowserAirbnbScraper {
     try {
       console.log(`📅 Setting check-out date: ${options.checkOut}`);
       await this.page.click('[data-testid="date-picker-checkout"]');
-      await this.page.waitForTimeout(1000);
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Click on the specific date
       const checkOutSelector = `[data-testid="date-picker-day-${options.checkOut}"]`;
       await this.page.waitForSelector(checkOutSelector, { timeout: 5000 });
       await this.page.click(checkOutSelector);
-      await this.page.waitForTimeout(1000);
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
       console.log('⚠️ Could not set check-out date, continuing...');
     }
@@ -212,7 +212,7 @@ export class BrowserAirbnbScraper {
       if (reserveButton) {
         await reserveButton.click();
         console.log('✅ Clicked Reserve button');
-        await this.page.waitForTimeout(3000);
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
     } catch (error) {
       console.log('⚠️ Could not find Reserve button, continuing with property page...');
@@ -301,7 +301,7 @@ export class BrowserAirbnbScraper {
         for (const [key, pattern] of Object.entries(patterns)) {
           const match = text.match(pattern);
           if (match) {
-            const value = parseFloat(match[1].replace(/,/g, ''));
+            const value = parseFloat(match[1]!.replace(/,/g, ''));
             if (!isNaN(value)) {
               if (key === 'accommodationSubtotal') {
                 data.rawData.accommodationSubtotal = value;

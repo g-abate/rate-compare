@@ -185,9 +185,9 @@ export class AirbnbScraper {
   private rotateUserAgent(): void {
     if (this.config.ethicalConfig.userAgentRotation) {
       const randomIndex = Math.floor(Math.random() * USER_AGENTS.length);
-      this.currentUserAgent = USER_AGENTS[randomIndex] || USER_AGENTS[0];
+      this.currentUserAgent = USER_AGENTS[randomIndex] || USER_AGENTS[0]!;
     } else {
-      this.currentUserAgent = USER_AGENTS[0];
+      this.currentUserAgent = USER_AGENTS[0]!;
     }
   }
 
