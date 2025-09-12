@@ -1,6 +1,6 @@
 /**
  * Browser-based Airbnb scraper using Puppeteer
- * 
+ *
  * This scraper opens a real browser and navigates to Airbnb pages
  * to extract accurate pricing data that's loaded via JavaScript.
  *
@@ -64,9 +64,11 @@ export class BrowserAirbnbScraper {
       headless: options.headless !== false,
       slowMo: options.slowMo || 100,
       timeout: options.timeout || 30000,
-      userAgent: options.userAgent || 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      userAgent:
+        options.userAgent ||
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       viewport: options.viewport || { width: 1366, height: 768 },
-      ...options
+      ...options,
     };
   }
 
@@ -75,7 +77,7 @@ export class BrowserAirbnbScraper {
    */
   async init(): Promise<void> {
     console.log('🚀 Launching browser...');
-    
+
     this.browser = await puppeteer.launch({
       headless: this.options.headless,
       slowMo: this.options.slowMo,
@@ -91,23 +93,23 @@ export class BrowserAirbnbScraper {
         '--disable-features=VizDisplayCompositor',
         '--disable-web-security',
         '--disable-features=TranslateUI',
-        '--disable-ipc-flooding-protection'
-      ]
+        '--disable-ipc-flooding-protection',
+      ],
     });
 
     this.page = await this.browser.newPage();
-    
+
     // Set user agent and viewport
     await this.page.setUserAgent(this.options.userAgent);
     await this.page.setViewport(this.options.viewport);
-    
+
     // Set extra headers
     await this.page.setExtraHTTPHeaders({
       'Accept-Language': 'en-US,en;q=0.9',
       'Accept-Encoding': 'gzip, deflate, br',
-      'DNT': '1',
-      'Connection': 'keep-alive',
-      'Upgrade-Insecure-Requests': '1'
+      DNT: '1',
+      Connection: 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
     });
 
     // Remove automation indicators
@@ -120,11 +122,10 @@ export class BrowserAirbnbScraper {
     // Add some random delays to appear more human-like
     await this.page.evaluateOnNewDocument(() => {
       const originalQuery = window.navigator.permissions.query;
-      return window.navigator.permissions.query = (parameters: any) => (
-        parameters.name === 'notifications' ?
-          Promise.resolve({ state: Notification.permission }) :
-          originalQuery(parameters)
-      );
+      return (window.navigator.permissions.query = (parameters: any) =>
+        parameters.name === 'notifications'
+          ? Promise.resolve({ state: Notification.permission })
+          : originalQuery(parameters));
     });
 
     console.log('✅ Browser initialized successfully');
@@ -162,11 +163,11 @@ export class BrowserAirbnbScraper {
     }
 
     console.log(`🏠 Navigating to property: ${options.propertyUrl}`);
-    
+
     // Navigate to the property page
-    await this.page.goto(options.propertyUrl, { 
+    await this.page.goto(options.propertyUrl, {
       waitUntil: 'networkidle2',
-      timeout: this.options.timeout 
+      timeout: this.options.timeout,
     });
 
     // Wait for the page to load
@@ -177,7 +178,7 @@ export class BrowserAirbnbScraper {
       console.log(`📅 Setting check-in date: ${options.checkIn}`);
       await this.page.click('[data-testid="date-picker-checkin"]');
       await this.page.waitForTimeout(1000);
-      
+
       // Click on the specific date
       const checkInSelector = `[data-testid="date-picker-day-${options.checkIn}"]`;
       await this.page.waitForSelector(checkInSelector, { timeout: 5000 });
@@ -192,7 +193,7 @@ export class BrowserAirbnbScraper {
       console.log(`📅 Setting check-out date: ${options.checkOut}`);
       await this.page.click('[data-testid="date-picker-checkout"]');
       await this.page.waitForTimeout(1000);
-      
+
       // Click on the specific date
       const checkOutSelector = `[data-testid="date-picker-day-${options.checkOut}"]`;
       await this.page.waitForSelector(checkOutSelector, { timeout: 5000 });
@@ -205,7 +206,9 @@ export class BrowserAirbnbScraper {
     // Try to click Reserve button to get to booking page
     try {
       console.log('🔍 Looking for Reserve button...');
-      const reserveButton = await this.page.waitForSelector('[data-testid="homes-pdp-cta"]', { timeout: 10000 });
+      const reserveButton = await this.page.waitForSelector('[data-testid="homes-pdp-cta"]', {
+        timeout: 10000,
+      });
       if (reserveButton) {
         await reserveButton.click();
         console.log('✅ Clicked Reserve button');
@@ -233,7 +236,7 @@ export class BrowserAirbnbScraper {
       '[data-testid="pricing-summary"]',
       '[class*="total"]',
       '[class*="breakdown"]',
-      '[class*="summary"]'
+      '[class*="summary"]',
     ];
 
     let pricingElement = null;
@@ -262,18 +265,20 @@ export class BrowserAirbnbScraper {
         taxes: 0,
         totalPrice: 0,
         currency: 'USD',
-        rawData: {}
+        rawData: {},
       };
 
       // Look for elements containing pricing information
       const pricingDivs = Array.from(document.querySelectorAll('div')).filter(div => {
         const text = div.textContent || '';
-        return text.includes('Price details') || 
-               text.includes('Total USD') || 
-               text.includes('nights x') || 
-               text.includes('Taxes') ||
-               text.includes('Service fee') ||
-               text.includes('Cleaning fee');
+        return (
+          text.includes('Price details') ||
+          text.includes('Total USD') ||
+          text.includes('nights x') ||
+          text.includes('Taxes') ||
+          text.includes('Service fee') ||
+          text.includes('Cleaning fee')
+        );
       });
 
       console.log(`Found ${pricingDivs.length} potential pricing divs`);
@@ -286,13 +291,13 @@ export class BrowserAirbnbScraper {
         cleaningFee: /cleaning\s+fee\s*\$([\d,]+(?:\.\d{2})?)/i,
         serviceFee: /service\s+fee\s*\$([\d,]+(?:\.\d{2})?)/i,
         taxes: /taxes\s*\$([\d,]+(?:\.\d{2})?)/i,
-        total: /total\s+(?:usd\s+)?\$([\d,]+(?:\.\d{2})?)/i
+        total: /total\s+(?:usd\s+)?\$([\d,]+(?:\.\d{2})?)/i,
       };
 
       // Extract values using patterns
       for (const div of pricingDivs) {
         const text = div.textContent || '';
-        
+
         for (const [key, pattern] of Object.entries(patterns)) {
           const match = text.match(pattern);
           if (match) {
@@ -351,13 +356,13 @@ export class BrowserAirbnbScraper {
 
     try {
       const propertyId = options.propertyId || this.extractPropertyId(options.propertyUrl);
-      
+
       // Navigate to property and set dates
       await this.navigateToProperty(options);
-      
+
       // Extract pricing data
       const pricingData = await this.extractDetailedPricingData();
-      
+
       // Create rate data
       const rateData: RateData = {
         channel: 'airbnb',
@@ -369,12 +374,12 @@ export class BrowserAirbnbScraper {
           cleaning: pricingData.cleaningFee,
           service: pricingData.serviceFee,
           taxes: pricingData.taxes,
-          other: 0
+          other: 0,
         },
         totalPrice: pricingData.totalPrice,
         currency: pricingData.currency,
         availability: true,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
 
       const result: ScrapingResult = {
@@ -384,12 +389,11 @@ export class BrowserAirbnbScraper {
         checkOut: options.checkOut,
         rates: [rateData],
         scrapedAt: new Date().toISOString(),
-        source: 'booking_page_detailed'
+        source: 'booking_page_detailed',
       };
 
       console.log('✅ Scraping completed successfully');
       return result;
-
     } catch (error) {
       console.error('❌ Scraping failed:', error);
       throw error;
@@ -399,7 +403,10 @@ export class BrowserAirbnbScraper {
   /**
    * Static method to scrape rates with automatic cleanup
    */
-  static async scrapeRates(options: ScrapingOptions, scraperOptions?: BrowserScraperOptions): Promise<ScrapingResult> {
+  static async scrapeRates(
+    options: ScrapingOptions,
+    scraperOptions?: BrowserScraperOptions
+  ): Promise<ScrapingResult> {
     const scraper = new BrowserAirbnbScraper(scraperOptions);
     try {
       return await scraper.scrapeRates(options);

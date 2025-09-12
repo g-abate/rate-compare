@@ -1,6 +1,6 @@
 /**
  * Universal Rate Comparison Snippet - Core Implementation
- * 
+ *
  * @package Rate_Compare
  * @since 1.0.0
  */
@@ -67,7 +67,12 @@ interface ThemeConfig {
 /**
  * List of supported booking channels
  */
-const SUPPORTED_CHANNELS: readonly SupportedChannel[] = ['airbnb', 'vrbo', 'booking', 'expedia'] as const;
+const SUPPORTED_CHANNELS: readonly SupportedChannel[] = [
+  'airbnb',
+  'vrbo',
+  'booking',
+  'expedia',
+] as const;
 
 /**
  * Default configuration values
@@ -75,7 +80,7 @@ const SUPPORTED_CHANNELS: readonly SupportedChannel[] = ['airbnb', 'vrbo', 'book
 const DEFAULT_CONFIG = {
   displayMode: 'inline' as const,
   theme: 'light' as const,
-  locale: 'en-US'
+  locale: 'en-US',
 } as const;
 
 /**
@@ -86,14 +91,14 @@ const THEME_CONFIGS: Record<Theme, ThemeConfig> = {
     primary: '#000000',
     background: '#ffffff',
     text: '#000000',
-    border: '#cccccc'
+    border: '#cccccc',
   },
   dark: {
     primary: '#ffffff',
     background: '#333333',
     text: '#ffffff',
-    border: '#555555'
-  }
+    border: '#555555',
+  },
 } as const;
 
 /**
@@ -103,7 +108,7 @@ const CSS_CLASSES = {
   WIDGET: 'rate-compare-widget',
   INLINE: 'rate-compare-inline',
   FLOATING: 'rate-compare-floating',
-  THEME_PREFIX: 'rate-compare-theme-'
+  THEME_PREFIX: 'rate-compare-theme-',
 } as const;
 
 /**
@@ -113,7 +118,7 @@ const CSS_PROPERTIES = {
   PRIMARY: '--rate-compare-primary',
   BACKGROUND: '--rate-compare-background',
   TEXT: '--rate-compare-text',
-  BORDER: '--rate-compare-border'
+  BORDER: '--rate-compare-border',
 } as const;
 
 // ============================================================================
@@ -122,10 +127,10 @@ const CSS_PROPERTIES = {
 
 /**
  * Universal Rate Comparison Snippet Class
- * 
+ *
  * Provides a universal JavaScript snippet for rate comparison functionality
  * that can be embedded on any website without dependencies.
- * 
+ *
  * @example
  * ```typescript
  * const snippet = new RateComparisonSnippet({
@@ -134,7 +139,7 @@ const CSS_PROPERTIES = {
  *   displayMode: 'inline',
  *   theme: 'light'
  * });
- * 
+ *
  * await snippet.init();
  * ```
  */
@@ -146,18 +151,18 @@ export class RateComparisonSnippet {
 
   /**
    * Creates a new RateComparisonSnippet instance
-   * 
+   *
    * @param config - Configuration object for the snippet
    * @throws {Error} When configuration is invalid
    */
   constructor(config: RateComparisonConfig) {
     // Validate configuration first
     this.validateConfig(config);
-    
+
     // Store configuration with defaults
     this.config = {
       ...DEFAULT_CONFIG,
-      ...config
+      ...config,
     };
 
     // Initialize event handlers map
@@ -170,7 +175,7 @@ export class RateComparisonSnippet {
 
   /**
    * Validates the configuration object
-   * 
+   *
    * @param config - Configuration to validate
    * @throws {Error} When configuration is invalid
    */
@@ -181,7 +186,7 @@ export class RateComparisonSnippet {
 
   /**
    * Validates the property ID
-   * 
+   *
    * @param propertyId - Property ID to validate
    * @throws {Error} When property ID is invalid
    */
@@ -193,7 +198,7 @@ export class RateComparisonSnippet {
 
   /**
    * Validates the channels array
-   * 
+   *
    * @param channels - Channels array to validate
    * @throws {Error} When channels array is invalid
    */
@@ -230,7 +235,7 @@ export class RateComparisonSnippet {
 
   /**
    * Initializes the snippet and creates the DOM elements
-   * 
+   *
    * @returns Promise that resolves when initialization is complete
    * @throws {Error} When initialization fails
    */
@@ -252,7 +257,6 @@ export class RateComparisonSnippet {
 
       // Emit ready event
       this.emit('ready');
-
     } catch (error) {
       this.emit('error', error);
       throw error;
@@ -297,10 +301,9 @@ export class RateComparisonSnippet {
   private addDisplayModeClass(): void {
     if (!this.container) return;
 
-    const displayModeClass = this.config.displayMode === 'inline' 
-      ? CSS_CLASSES.INLINE 
-      : CSS_CLASSES.FLOATING;
-    
+    const displayModeClass =
+      this.config.displayMode === 'inline' ? CSS_CLASSES.INLINE : CSS_CLASSES.FLOATING;
+
     this.container.classList.add(displayModeClass);
   }
 
@@ -321,7 +324,7 @@ export class RateComparisonSnippet {
     if (!this.container) return;
 
     const themeConfig = THEME_CONFIGS[this.config.theme];
-    
+
     // Set CSS custom properties
     this.container.style.setProperty(CSS_PROPERTIES.PRIMARY, themeConfig.primary);
     this.container.style.setProperty(CSS_PROPERTIES.BACKGROUND, themeConfig.background);
@@ -331,7 +334,7 @@ export class RateComparisonSnippet {
 
   /**
    * Adds an event listener for the specified event type
-   * 
+   *
    * @param event - The event type to listen for
    * @param handler - The function to call when the event is emitted
    */
@@ -344,7 +347,7 @@ export class RateComparisonSnippet {
 
   /**
    * Removes an event listener for the specified event type
-   * 
+   *
    * @param event - The event type to remove the listener from
    * @param handler - The function to remove from the event listeners
    */
@@ -360,13 +363,13 @@ export class RateComparisonSnippet {
 
   /**
    * Updates the configuration with new values
-   * 
+   *
    * @param newConfig - Partial configuration object with new values
    */
   public configure(newConfig: Partial<RateComparisonConfig>): void {
     // Merge new config with existing
     this.config = { ...this.config, ...newConfig };
-    
+
     // Re-apply theme if it changed
     if (newConfig.theme && this.isInitialized) {
       this.applyTheme();
@@ -397,7 +400,7 @@ export class RateComparisonSnippet {
 
   /**
    * Emits an event to all registered handlers
-   * 
+   *
    * @param event - The event type to emit
    * @param data - Optional data to pass to event handlers
    */
