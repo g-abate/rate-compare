@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Compare - Configuration Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #007cba;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+        }
+        
+        .form-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007cba;
+            box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.1);
+        }
+        
+        .form-group .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .preview-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .preview-section h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .preview-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        
+        .preview-controls input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .preview-controls button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .preview-controls button:hover {
+            background: #005a87;
+        }
+        
+        .code-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .code-section h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            overflow-x: auto;
+            position: relative;
+        }
+        
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .copy-button:hover {
+            background: #005a87;
+        }
+        
+        .steps {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .steps h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .step {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #007cba;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .step h4 {
+            color: #007cba;
+            margin-bottom: 8px;
+        }
+        
+        .step p {
+            color: #666;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Rate Compare Configuration</h1>
+            <p>Configure your rate comparison widget for your website</p>
+        </div>
+
+        <div class="form-section">
+            <h3>Property Configuration</h3>
+            
+            <div class="form-group">
+                <label for="propertyId">Property ID *</label>
+                <input type="text" id="propertyId" placeholder="e.g., your-property-123" required>
+                <div class="help-text">A unique identifier for your property. This should match your listing ID on booking platforms.</div>
+            </div>
+
+            <div class="form-group">
+                <label>Booking Channels *</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channel-airbnb" value="airbnb" checked>
+                        <label for="channel-airbnb">Airbnb</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channel-vrbo" value="vrbo" checked>
+                        <label for="channel-vrbo">VRBO</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channel-booking" value="booking">
+                        <label for="channel-booking">Booking.com</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channel-expedia" value="expedia">
+                        <label for="channel-expedia">Expedia</label>
+                    </div>
+                </div>
+                <div class="help-text">Select which booking channels you want to compare.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="displayMode">Display Mode</label>
+                <select id="displayMode">
+                    <option value="inline">Inline (embedded in page)</option>
+                    <option value="floating">Floating (fixed position)</option>
+                </select>
+                <div class="help-text">How the widget should appear on your website.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="theme">Theme</label>
+                <select id="theme">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+                <div class="help-text">Color scheme for the widget.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="locale">Locale</label>
+                <select id="locale">
+                    <option value="en-US">English (US)</option>
+                    <option value="en-GB">English (UK)</option>
+                    <option value="es-ES">Spanish</option>
+                    <option value="fr-FR">French</option>
+                    <option value="de-DE">German</option>
+                </select>
+                <div class="help-text">Language and region settings.</div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <h3>Preview</h3>
+            <p>Test your configuration with sample dates:</p>
+            
+            <div class="preview-controls">
+                <input type="date" id="previewCheckin" value="2024-01-15">
+                <input type="date" id="previewCheckout" value="2024-01-17">
+                <button onclick="updatePreview()">Update Preview</button>
+            </div>
+            
+            <div id="previewWidget"></div>
+        </div>
+
+        <div class="code-section">
+            <h3>Integration Code</h3>
+            <p>Copy and paste this code into your website:</p>
+            
+            <div class="code-block">
+                <button class="copy-button" onclick="copyCode()">Copy</button>
+                <div id="generatedCode">
+                    <!-- Generated code will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="steps">
+            <h3>Integration Steps</h3>
+            
+            <div class="step">
+                <h4>1. Add the Script Tag</h4>
+                <p>Include the Rate Compare script in your HTML head or before the closing body tag.</p>
+            </div>
+            
+            <div class="step">
+                <h4>2. Copy the Configuration Code</h4>
+                <p>Copy the generated code above and paste it where you want the widget to appear.</p>
+            </div>
+            
+            <div class="step">
+                <h4>3. Test Your Integration</h4>
+                <p>Visit your website and test the rate comparison functionality.</p>
+            </div>
+            
+            <div class="step">
+                <h4>4. Customize (Optional)</h4>
+                <p>You can customize the widget's appearance using CSS to match your website's design.</p>
+            </div>
+        </div>
+
+        <div class="error" id="errorMessage"></div>
+        <div class="success" id="successMessage"></div>
+    </div>
+
+    <!-- Load the Rate Compare snippet for preview -->
+    <script src="../dist/rate-compare.umd.js"></script>
+    
+    <script>
+        let previewSnippet = null;
+
+        // Initialize preview widget
+        async function initializePreview() {
+            try {
+                const config = getConfiguration();
+                previewSnippet = new RateCompare.RateComparisonSnippet(config);
+                await previewSnippet.init();
+                updatePreview();
+            } catch (error) {
+                showError('Failed to initialize preview: ' + error.message);
+            }
+        }
+
+        // Get current configuration from form
+        function getConfiguration() {
+            const propertyId = document.getElementById('propertyId').value;
+            const channels = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            const displayMode = document.getElementById('displayMode').value;
+            const theme = document.getElementById('theme').value;
+            const locale = document.getElementById('locale').value;
+
+            return {
+                propertyId: propertyId || 'demo-property-123',
+                channels: channels.length > 0 ? channels : ['airbnb', 'vrbo'],
+                displayMode,
+                theme,
+                locale
+            };
+        }
+
+        // Update preview widget
+        async function updatePreview() {
+            if (!previewSnippet) return;
+
+            const checkIn = document.getElementById('previewCheckin').value;
+            const checkOut = document.getElementById('previewCheckout').value;
+
+            if (!checkIn || !checkOut) {
+                showError('Please select both check-in and check-out dates for preview');
+                return;
+            }
+
+            try {
+                await previewSnippet.fetchRates(checkIn, checkOut);
+            } catch (error) {
+                showError('Preview failed: ' + error.message);
+            }
+        }
+
+        // Generate integration code
+        function generateCode() {
+            const config = getConfiguration();
+            const propertyId = config.propertyId;
+            const channels = config.channels.map(ch => `'${ch}'`).join(', ');
+            
+            const code = `<!-- Rate Compare Widget -->
+<script src="https://cdn.example.com/rate-compare.umd.min.js"></script>
+<script>
+  // Initialize the Rate Compare widget
+  const rateCompare = new RateCompare.RateComparisonSnippet({
+    propertyId: '${propertyId}',
+    channels: [${channels}],
+    displayMode: '${config.displayMode}',
+    theme: '${config.theme}',
+    locale: '${config.locale}'
+  });
+
+  // Initialize the widget
+  rateCompare.init().then(() => {
+    console.log('Rate Compare widget initialized');
+  }).catch(error => {
+    console.error('Failed to initialize widget:', error);
+  });
+
+  // Example: Fetch rates for specific dates
+  // rateCompare.fetchRates('2024-01-15', '2024-01-17');
+</script>`;
+
+            return code;
+        }
+
+        // Update generated code
+        function updateCode() {
+            const codeElement = document.getElementById('generatedCode');
+            codeElement.textContent = generateCode();
+        }
+
+        // Copy code to clipboard
+        function copyCode() {
+            const code = generateCode();
+            navigator.clipboard.writeText(code).then(() => {
+                showSuccess('Code copied to clipboard!');
+            }).catch(() => {
+                showError('Failed to copy code. Please select and copy manually.');
+            });
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize preview
+            initializePreview();
+            
+            // Update code when form changes
+            const formElements = document.querySelectorAll('input, select');
+            formElements.forEach(element => {
+                element.addEventListener('change', () => {
+                    updateCode();
+                    // Reinitialize preview with new config
+                    if (previewSnippet) {
+                        previewSnippet.teardown();
+                        initializePreview();
+                    }
+                });
+            });
+            
+            // Initial code generation
+            updateCode();
+        });
+    </script>
+</body>
+</html>

@@ -7,8 +7,255 @@ A comprehensive rate comparison system for short-term rental properties, availab
 This repository contains three main packages:
 
 - **`wordpress-plugin/`** - WordPress plugin for rate comparison
-- **`universal-snippet/`** - Universal JavaScript snippet for any website
-- **`shared/`** - Shared core logic and utilities
+- **`universal-snippet/`** - Universal JavaScript snippet for any website (✅ **COMPLETE**)
+- **`shared/`** - Shared core logic and utilities (✅ **COMPLETE**)
+
+## ✨ Universal JavaScript Snippet
+
+The universal snippet is a **production-ready** JavaScript library that can be embedded on any website to provide real-time rate comparison across multiple booking channels.
+
+### 🎯 Key Features
+
+- **Universal Compatibility**: Works on any website platform (WordPress, Shopify, React, Vue, etc.)
+- **Professional UI**: Modern card-based design with platform logos and best deal highlighting
+- **Multi-Channel Support**: Airbnb, VRBO, Booking.com, Expedia rate comparison
+- **Mobile-First**: Responsive design optimized for all devices
+- **Easy Integration**: Single script tag installation with configuration panel
+- **Performance Optimized**: Lightweight, cached, and tree-shakeable
+
+### 📦 Installation
+
+#### CDN (Recommended)
+```html
+<script src="https://cdn.example.com/rate-compare.umd.min.js"></script>
+```
+
+#### NPM
+```bash
+npm install @rate-compare/universal-snippet
+```
+
+### 🚀 Quick Start
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Property Listing</title>
+</head>
+<body>
+    <!-- Your content -->
+    
+    <!-- Rate Compare Widget -->
+    <script src="https://cdn.example.com/rate-compare.umd.min.js"></script>
+    <script>
+        const rateCompare = new RateCompare.RateComparisonSnippet({
+            propertyId: 'your-property-123',
+            channels: ['airbnb', 'vrbo', 'booking'],
+            displayMode: 'inline',
+            theme: 'light'
+        });
+
+        rateCompare.init().then(() => {
+            console.log('Rate comparison widget ready');
+        });
+    </script>
+</body>
+</html>
+```
+
+### 🎨 Display Modes
+
+#### Inline Mode
+```javascript
+const snippet = new RateCompare.RateComparisonSnippet({
+    propertyId: 'property-123',
+    channels: ['airbnb', 'vrbo'],
+    displayMode: 'inline',  // Embedded in page content
+    theme: 'light'
+});
+```
+
+#### Floating Mode
+```javascript
+const snippet = new RateCompare.RateComparisonSnippet({
+    propertyId: 'property-123',
+    channels: ['airbnb', 'vrbo'],
+    displayMode: 'floating',  // Fixed position widget
+    theme: 'dark'
+});
+```
+
+### 🔧 Configuration Options
+
+```javascript
+const snippet = new RateCompare.RateComparisonSnippet({
+    // Required
+    propertyId: 'your-property-id',
+    channels: ['airbnb', 'vrbo', 'booking', 'expedia'],
+    
+    // Optional
+    displayMode: 'inline',     // 'inline' | 'floating'
+    theme: 'light',           // 'light' | 'dark'
+    locale: 'en-US'           // 'en-US' | 'en-GB' | 'es-ES' | 'fr-FR' | 'de-DE'
+});
+```
+
+### 📱 React Integration
+
+```jsx
+import React, { useEffect, useRef } from 'react';
+import { RateComparisonSnippet } from '@rate-compare/universal-snippet';
+
+const RateCompareWidget = ({ propertyId, channels }) => {
+    const snippetRef = useRef(null);
+
+    useEffect(() => {
+        const snippet = new RateComparisonSnippet({
+            propertyId,
+            channels,
+            displayMode: 'inline',
+            theme: 'light'
+        });
+
+        snippetRef.current = snippet;
+        snippet.init();
+
+        return () => snippet.teardown();
+    }, [propertyId, channels]);
+
+    return <div id="rate-compare-widget" />;
+};
+```
+
+### 🎯 Vue.js Integration
+
+```vue
+<template>
+    <div id="rate-compare-widget"></div>
+</template>
+
+<script>
+import { RateComparisonSnippet } from '@rate-compare/universal-snippet';
+
+export default {
+    props: ['propertyId', 'channels'],
+    data() {
+        return {
+            snippet: null
+        };
+    },
+    mounted() {
+        this.snippet = new RateComparisonSnippet({
+            propertyId: this.propertyId,
+            channels: this.channels,
+            displayMode: 'inline',
+            theme: 'light'
+        });
+        
+        this.snippet.init();
+    },
+    beforeUnmount() {
+        if (this.snippet) {
+            this.snippet.teardown();
+        }
+    }
+};
+</script>
+```
+
+### 🎨 Styling & Customization
+
+The widget uses CSS custom properties for easy theming:
+
+```css
+.rate-compare-widget {
+    --rate-compare-primary: #007cba;
+    --rate-compare-background: #ffffff;
+    --rate-compare-text: #333333;
+    --rate-compare-border: #e0e0e0;
+}
+```
+
+### 📊 API Reference
+
+#### Methods
+
+- `init()` - Initialize the widget
+- `fetchRates(checkIn, checkOut)` - Fetch rates for specific dates
+- `configure(newConfig)` - Update configuration
+- `on(event, handler)` - Add event listener
+- `off(event, handler)` - Remove event listener
+- `teardown()` - Clean up and remove widget
+
+#### Events
+
+- `ready` - Widget initialized and ready
+- `rates-loaded` - Rates fetched and displayed
+- `error` - Error occurred
+- `teardown` - Widget cleaned up
+
+#### Example Usage
+
+```javascript
+const snippet = new RateCompare.RateComparisonSnippet({
+    propertyId: 'demo-123',
+    channels: ['airbnb', 'vrbo']
+});
+
+// Event handling
+snippet.on('ready', () => {
+    console.log('Widget ready');
+});
+
+snippet.on('rates-loaded', (rates) => {
+    console.log('Rates loaded:', rates);
+});
+
+snippet.on('error', (error) => {
+    console.error('Error:', error);
+});
+
+// Initialize and fetch rates
+await snippet.init();
+await snippet.fetchRates('2024-01-15', '2024-01-17');
+```
+
+### 🧪 Testing
+
+```bash
+# Run tests
+cd universal-snippet
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run E2E tests
+npm run test:e2e
+```
+
+### 📦 Build Outputs
+
+- `rate-compare.umd.js` - Universal Module Definition
+- `rate-compare.esm.js` - ES Modules
+- `rate-compare.umd.min.js` - Minified UMD
+- TypeScript declarations included
+
+### 🌐 Browser Support
+
+- Chrome 80+
+- Firefox 75+
+- Safari 13+
+- Edge 80+
+
+### 📖 Examples
+
+Check out the `universal-snippet/examples/` directory for:
+- Basic HTML integration
+- React component example
+- Vue.js component example
+- Configuration panel for non-technical users
 
 ## 🚀 Quick Start
 

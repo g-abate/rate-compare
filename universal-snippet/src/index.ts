@@ -13,10 +13,11 @@ export type {
   RateComparisonConfig, 
   EventType, 
   EventHandler,
-  SupportedChannel,
   DisplayMode,
   Theme
 } from './components/rate-comparison-snippet';
+
+export type { SupportedChannel, RateData } from './types/rate-data';
 
 // Legacy function for backward compatibility
 export function initRateComparison(): void {

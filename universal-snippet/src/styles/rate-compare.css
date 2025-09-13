@@ -1,0 +1,302 @@
+/**
+ * Universal Rate Comparison Snippet - Styles
+ *
+ * @package Rate_Compare
+ * @since 1.0.0
+ */
+
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
+
+.rate-compare-widget {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--rate-compare-text, #000000);
+  background: var(--rate-compare-background, #ffffff);
+  border: 1px solid var(--rate-compare-border, #cccccc);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ============================================================================
+   DISPLAY MODES
+   ============================================================================ */
+
+.rate-compare-inline {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.rate-compare-floating {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  z-index: 1000;
+}
+
+@media (max-width: 768px) {
+  .rate-compare-floating {
+    width: calc(100% - 40px);
+    right: 20px;
+    left: 20px;
+  }
+}
+
+/* ============================================================================
+   LOADING STATE
+   ============================================================================ */
+
+.rate-compare-loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--rate-compare-text, #000000);
+}
+
+.rate-compare-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--rate-compare-border, #cccccc);
+  border-top: 2px solid var(--rate-compare-primary, #000000);
+  border-radius: 50%;
+  animation: rate-compare-spin 1s linear infinite;
+  margin: 0 auto 10px;
+}
+
+@keyframes rate-compare-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   ERROR STATE
+   ============================================================================ */
+
+.rate-compare-error {
+  padding: 20px;
+  text-align: center;
+  color: #dc3545;
+}
+
+.rate-compare-error p {
+  margin: 0 0 15px 0;
+}
+
+.rate-compare-retry {
+  background: var(--rate-compare-primary, #000000);
+  color: var(--rate-compare-background, #ffffff);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+
+.rate-compare-retry:hover {
+  opacity: 0.8;
+}
+
+/* ============================================================================
+   RESULTS DISPLAY
+   ============================================================================ */
+
+.rate-compare-results {
+  padding: 20px;
+}
+
+.rate-compare-results h3 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--rate-compare-text, #000000);
+}
+
+.rate-compare-rates {
+  display: grid;
+  gap: 15px;
+}
+
+/* ============================================================================
+   RATE CARDS
+   ============================================================================ */
+
+.rate-compare-card {
+  border: 1px solid var(--rate-compare-border, #cccccc);
+  border-radius: 6px;
+  padding: 15px;
+  background: var(--rate-compare-background, #ffffff);
+  transition: box-shadow 0.2s;
+}
+
+.rate-compare-card:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.rate-compare-channel {
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-bottom: 8px;
+  color: var(--rate-compare-primary, #000000);
+}
+
+.rate-compare-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--rate-compare-primary, #000000);
+  margin-bottom: 10px;
+}
+
+.rate-compare-breakdown {
+  font-size: 12px;
+  color: #666666;
+  margin-bottom: 10px;
+}
+
+.rate-compare-base {
+  margin-bottom: 5px;
+}
+
+.rate-compare-fees {
+  margin-left: 10px;
+}
+
+.rate-compare-fees div {
+  margin-bottom: 2px;
+}
+
+.rate-compare-availability {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.rate-compare-availability.available {
+  background: #d4edda;
+  color: #155724;
+}
+
+.rate-compare-availability.unavailable {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.rate-compare-book {
+  display: inline-block;
+  background: var(--rate-compare-primary, #000000);
+  color: var(--rate-compare-background, #ffffff);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.rate-compare-book:hover {
+  opacity: 0.8;
+  text-decoration: none;
+  color: var(--rate-compare-background, #ffffff);
+}
+
+/* ============================================================================
+   THEME VARIATIONS
+   ============================================================================ */
+
+.rate-compare-theme-dark {
+  --rate-compare-primary: #ffffff;
+  --rate-compare-background: #333333;
+  --rate-compare-text: #ffffff;
+  --rate-compare-border: #555555;
+}
+
+.rate-compare-theme-light {
+  --rate-compare-primary: #000000;
+  --rate-compare-background: #ffffff;
+  --rate-compare-text: #000000;
+  --rate-compare-border: #cccccc;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .rate-compare-widget {
+    font-size: 13px;
+  }
+  
+  .rate-compare-results {
+    padding: 15px;
+  }
+  
+  .rate-compare-card {
+    padding: 12px;
+  }
+  
+  .rate-compare-price {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rate-compare-widget {
+    font-size: 12px;
+  }
+  
+  .rate-compare-results {
+    padding: 10px;
+  }
+  
+  .rate-compare-card {
+    padding: 10px;
+  }
+  
+  .rate-compare-price {
+    font-size: 16px;
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+.rate-compare-widget:focus-within {
+  outline: 2px solid var(--rate-compare-primary, #000000);
+  outline-offset: 2px;
+}
+
+.rate-compare-book:focus {
+  outline: 2px solid var(--rate-compare-primary, #000000);
+  outline-offset: 2px;
+}
+
+.rate-compare-retry:focus {
+  outline: 2px solid var(--rate-compare-primary, #000000);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+  .rate-compare-widget {
+    box-shadow: none;
+    border: 1px solid #000000;
+  }
+  
+  .rate-compare-book {
+    background: #000000 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

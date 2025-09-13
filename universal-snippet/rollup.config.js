@@ -35,7 +35,6 @@ export default [
         declarationMap: false,
       }),
     ],
-    external: ['@rate-compare/shared'],
   },
   // Minified UMD build
   {
@@ -61,7 +60,6 @@ export default [
         },
       }),
     ],
-    external: ['@rate-compare/shared'],
   },
   // ESM build for modern browsers
   {
@@ -81,6 +79,5 @@ export default [
         declaration: false,
       }),
     ],
-    external: ['@rate-compare/shared'],
   },
 ];
